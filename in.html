@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSC-MS | Cluster Synergy Limited</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Layout Transitions */
+        .view-section { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Modal Backdrop */
+        .modal-open { overflow: hidden; }
+        .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        
+        /* PDF Templates container - hidden by default, visible only during capture */
+        #print-templates { 
+            display: block; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: -9999; 
+            opacity: 0; 
+            pointer-events: none; 
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+        body.pdf-capturing #print-templates {
+            z-index: 99999 !important;
+            opacity: 1 !important;
+            pointer-events: none;
+        }
+
+        /* A4 Template Styles */
+        .a4-page {
+            width: 794px;
+            min-height: 1123px;
+            background: white;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            position: relative;
+            padding: 40px 35px;
+            margin: 0 auto;
+        }
+        
+        /* CSS Generated Company Stamp */
+        .official-stamp {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border: 3px solid #0284c7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-15deg);
+            opacity: 0.8;
+            background: rgba(2, 132, 199, 0.05);
+        }
+        .official-stamp::before {
+            content: '';
+            position: absolute;
+            width: 102px;
+            height: 102px;
+            border: 1px dashed #0284c7;
+            border-radius: 50%;
+        }
+        .official-stamp-text {
+            text-align: center;
+            color: #0284c7;
+            font-weight: 800;
+            font-size: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1.2;
+            z-index: 1;
+        }
+
+        /* Compact Agreement Styles */
+        .agreement-compact {
+            font-size: 10.5px;
+            line-height: 1.35;
+        }
+        .agreement-compact h3 {
+            font-size: 16px;
+            margin: 5px 0 8px;
+        }
+        .agreement-compact h4 {
+            font-size: 11px;
+            font-weight: 700;
+            margin: 8px 0 3px;
+            color: #0c4a6e;
+        }
+        .agreement-compact p {
+            margin: 2px 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased overflow-hidden h-screen flex">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
+            <div class="flex items-center justify-center mx-auto mb-4">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" alt="Logo" class="w-20 h-20 rounded-full border-2 border-brand-100 shadow-sm" crossorigin="anonymous">
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-1">CSC-MS Portal</h1>
+            <p class="text-slate-500 mb-6 text-sm">Cluster Synergy Limited<br>Management System</p>
+            
+            <form id="login-form" class="space-y-4">
+                <div class="text-left">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                    <input type="email" id="user-email" placeholder="name@clustersynergy.com" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition" required>
+                </div>
+                <div class="text-left">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="user-pass" placeholder="••••••••" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition" required>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 text-white font-semibold py-2.5 rounded-lg hover:bg-brand-700 transition flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Secure Login
+                </button>
+            </form>
+            <div id="auth-spinner" class="hidden mt-4 text-brand-600">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl"></i>
+                <p class="text-sm mt-2">Authenticating Environment...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT -->
+    <div id="app-layout" class="hidden flex w-full h-full">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 z-20 hidden md:flex absolute md:relative h-full" id="sidebar">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" alt="Logo" class="w-10 h-10 rounded-full bg-white p-0.5" crossorigin="anonymous">
+                <span class="text-lg font-bold tracking-tight leading-tight">Cluster<br>Synergy</span>
+            </div>
+            
+            <nav class="flex-1 py-6 px-3 space-y-1">
+                <button onclick="nav('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition active" data-target="dashboard">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard
+                </button>
+                <button onclick="nav('clients')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-target="clients">
+                    <i class="fa-solid fa-users w-5 text-center"></i> Clients
+                </button>
+                <button onclick="nav('shipments')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-target="shipments">
+                    <i class="fa-solid fa-box-open w-5 text-center"></i> Shipments
+                </button>
+                <button onclick="nav('finance')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition" data-target="finance">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i> Finance
+                </button>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-800">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold" id="sidebar-user-initials">--</div>
+                    <div>
+                        <p class="text-sm font-medium truncate w-32" id="sidebar-user-name">Loading...</p>
+                        <p class="text-xs text-brand-400 truncate w-32" id="sidebar-user-role">Role</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-slate-800 rounded-lg transition">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-full w-full overflow-hidden">
+            
+            <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0">
+                <button class="md:hidden text-slate-500 hover:text-slate-700" onclick="document.getElementById('sidebar').classList.toggle('hidden')">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 class="text-lg font-semibold text-slate-800" id="page-title">Dashboard</h2>
+                <div class="flex items-center gap-4 text-slate-500">
+                    <button class="hover:text-brand-600 transition"><i class="fa-solid fa-bell"></i></button>
+                    <span class="text-sm font-medium" id="current-date"></span>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-slate-50 relative" id="main-content">
+                
+                <!-- DASHBOARD VIEW -->
+                <div id="view-dashboard" class="view-section space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <div><p class="text-sm text-slate-500 font-medium">Total Shipments</p><h3 class="text-2xl font-bold" id="stat-total-shipments">0</h3></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                            <div><p class="text-sm text-slate-500 font-medium">Pending</p><h3 class="text-2xl font-bold" id="stat-pending">0</h3></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl"><i class="fa-solid fa-check-double"></i></div>
+                            <div><p class="text-sm text-slate-500 font-medium">Cleared</p><h3 class="text-2xl font-bold" id="stat-cleared">0</h3></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-xl"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <div><p class="text-sm text-slate-500 font-medium">Outstanding Bal</p><h3 class="text-2xl font-bold" id="stat-balance">₦0</h3></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-semibold text-slate-800">Recent Shipments</h3>
+                                <button onclick="nav('shipments')" class="text-sm text-brand-600 hover:underline">View All</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                            <th class="p-4 font-medium">Job ID</th>
+                                            <th class="p-4 font-medium">Client</th>
+                                            <th class="p-4 font-medium">Status</th>
+                                            <th class="p-4 font-medium text-right">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboard-recent-table" class="text-sm divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                            <h3 class="font-semibold text-slate-800 mb-4">Financial Overview</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Total Revenue</span><span class="font-bold text-slate-800" id="stat-revenue">₦0</span></div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2"><div class="bg-brand-500 h-2 rounded-full w-full"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Collected</span><span class="font-bold text-emerald-600" id="stat-collected">₦0</span></div>
+                                    <div class="w-full bg-slate-100 rounded-full h-2"><div class="bg-emerald-500 h-2 rounded-full" id="bar-collected" style="width: 0%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLIENTS VIEW -->
+                <div id="view-clients" class="view-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="relative w-full sm:w-96">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="search-clients" placeholder="Search clients by name, company, TIN..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" onkeyup="filterClients()">
+                        </div>
+                        <button onclick="openModal('client-modal')" class="w-full sm:w-auto bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> New Client
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Client Info</th>
+                                        <th class="p-4 font-medium">Contact</th>
+                                        <th class="p-4 font-medium">Address / TIN</th>
+                                        <th class="p-4 font-medium">Added By</th>
+                                        <th class="p-4 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clients-table" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHIPMENTS VIEW -->
+                <div id="view-shipments" class="view-section hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex w-full sm:w-auto gap-2">
+                            <div class="relative w-full sm:w-64">
+                                <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400"></i>
+                                <input type="text" id="search-shipments" placeholder="Search ID, BL, Container..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500" onkeyup="filterShipments()">
+                            </div>
+                            <select id="filter-status" class="border border-slate-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white" onchange="filterShipments()">
+                                <option value="">All Statuses</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Documentation">Documentation</option>
+                                <option value="Duty Assessment">Duty Assessment</option>
+                                <option value="Payment">Payment</option>
+                                <option value="Cleared">Cleared</option>
+                                <option value="Delivered">Delivered</option>
+                            </select>
+                        </div>
+                        <button onclick="openShipmentModal()" class="w-full sm:w-auto bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-plus"></i> New Shipment
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Job ID & BL</th>
+                                        <th class="p-4 font-medium">Client</th>
+                                        <th class="p-4 font-medium">Goods / Port</th>
+                                        <th class="p-4 font-medium">Status</th>
+                                        <th class="p-4 font-medium text-right">Manage</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shipments-table" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHIPMENT DETAILS VIEW -->
+                <div id="view-shipment-details" class="view-section hidden space-y-6">
+                    <button onclick="nav('shipments')" class="text-slate-500 hover:text-brand-600 transition flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Shipments
+                    </button>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                            <div class="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 class="text-2xl font-bold text-slate-800" id="det-jobId">CSC-YYYY-XXX</h2>
+                                    <p class="text-slate-500" id="det-clientName">Client Name</p>
+                                    <p class="text-xs text-brand-500 mt-1" id="det-createdBy">Created By: -</p>
+                                </div>
+                                <span id="det-status-badge" class="px-3 py-1 rounded-full text-sm font-medium">Status</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+                                <div><p class="text-slate-400 mb-1">Bill of Lading (BL)</p><p class="font-semibold text-slate-800" id="det-bl">-</p></div>
+                                <div><p class="text-slate-400 mb-1">Container Number</p><p class="font-semibold text-slate-800" id="det-container">-</p></div>
+                                <div><p class="text-slate-400 mb-1">Port</p><p class="font-semibold text-slate-800" id="det-port">-</p></div>
+                                <div><p class="text-slate-400 mb-1">Arrival Date</p><p class="font-semibold text-slate-800" id="det-date">-</p></div>
+                                <div class="col-span-2"><p class="text-slate-400 mb-1">Goods Description</p><p class="font-semibold text-slate-800 bg-slate-50 p-3 rounded-lg" id="det-desc">-</p></div>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="openStatusModal()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium"><i class="fa-solid fa-rotate"></i> Update Status</button>
+                                <button onclick="generateShipmentStatement()" class="bg-brand-50 text-brand-700 px-4 py-2 rounded-lg hover:bg-brand-100 transition text-sm font-medium"><i class="fa-solid fa-file-pdf"></i> Download Statement</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                            <h3 class="font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-2">Financials</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between"><span class="text-slate-500">Total Charges:</span><span class="font-semibold" id="det-total">₦0.00</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Amount Paid:</span><span class="font-semibold text-emerald-600" id="det-paid">₦0.00</span></div>
+                                <div class="flex justify-between pt-3 border-t border-slate-100"><span class="font-bold text-slate-800">Balance Due:</span><span class="font-bold text-red-600 text-lg" id="det-balance">₦0.00</span></div>
+                            </div>
+                            <button onclick="openPaymentModal()" class="w-full mt-6 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-money-bill-wave"></i> Add Payment/Charge
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="flex border-b border-slate-200">
+                            <button class="px-6 py-3 font-medium text-brand-600 border-b-2 border-brand-600 bg-slate-50">Transactions</button>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Date</th>
+                                        <th class="p-4 font-medium">Description</th>
+                                        <th class="p-4 font-medium">Added By</th>
+                                        <th class="p-4 font-medium">Type</th>
+                                        <th class="p-4 font-medium text-right">Amount</th>
+                                        <th class="p-4 font-medium text-center">Receipt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payments-table" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FINANCE VIEW -->
+                <div id="view-finance" class="view-section hidden space-y-6">
+                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                         <div>
+                             <h3 class="text-lg font-bold text-slate-800">Global Financial Ledger</h3>
+                             <p class="text-sm text-slate-500">Overview of all transactions across all shipments.</p>
+                             <button onclick="generateGlobalStatement()" class="mt-3 bg-brand-50 text-brand-700 px-4 py-2 rounded-lg hover:bg-brand-100 transition text-sm font-medium flex items-center gap-2">
+                                 <i class="fa-solid fa-download"></i> Download Global Statement
+                             </button>
+                         </div>
+                         <div class="text-right">
+                             <p class="text-sm text-slate-500">Total System Revenue</p>
+                             <h2 class="text-3xl font-bold text-brand-600" id="finance-total-revenue">₦0.00</h2>
+                         </div>
+                     </div>
+                     
+                     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Date</th>
+                                        <th class="p-4 font-medium">Job ID</th>
+                                        <th class="p-4 font-medium">Client</th>
+                                        <th class="p-4 font-medium">Description</th>
+                                        <th class="p-4 font-medium">Type</th>
+                                        <th class="p-4 font-medium text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finance-table" class="text-sm divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Client Modal -->
+    <div id="client-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 glass-overlay" onclick="closeModal('client-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg relative z-10 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800" id="client-modal-title">Add New Client</h3>
+                <button onclick="closeModal('client-modal')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <form id="client-form" class="p-5 space-y-4">
+                <input type="hidden" id="client-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+                        <input type="text" id="client-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+                        <input type="text" id="client-company" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Phone *</label>
+                        <input type="tel" id="client-phone" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                        <input type="email" id="client-email" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">TIN / Tax ID</label>
+                        <input type="text" id="client-tin" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Full Address</label>
+                        <textarea id="client-address" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('client-modal')" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition font-medium">Save Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shipment Modal -->
+    <div id="shipment-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 glass-overlay" onclick="closeModal('shipment-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative z-10 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800">Create New Shipment</h3>
+                <button onclick="closeModal('shipment-modal')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <form id="shipment-form" class="p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Select Client *</label>
+                        <select id="ship-client" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
+                            <option value="">-- Choose Client --</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Bill of Lading (BL) *</label>
+                        <input type="text" id="ship-bl" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Container Number</label>
+                        <input type="text" id="ship-container" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Port of Arrival *</label>
+                        <input type="text" id="ship-port" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Expected Arrival Date *</label>
+                        <input type="date" id="ship-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Goods Description *</label>
+                        <textarea id="ship-desc" required rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="e.g., 20ft container containing auto parts"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('shipment-modal')" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition font-medium">Create Shipment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="status-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 glass-overlay" onclick="closeModal('status-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm relative z-10">
+            <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800">Update Status</h3>
+                <button onclick="closeModal('status-modal')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <select id="update-status-select" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
+                    <option value="Pending">Pending</option>
+                    <option value="Documentation">Documentation</option>
+                    <option value="Duty Assessment">Duty Assessment</option>
+                    <option value="Payment">Payment</option>
+                    <option value="Cleared">Cleared</option>
+                    <option value="Delivered">Delivered</option>
+                </select>
+                <button onclick="saveStatusUpdate()" class="w-full bg-brand-600 text-white py-2 rounded-lg hover:bg-brand-700 font-medium transition">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment/Charge Modal -->
+    <div id="payment-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 glass-overlay" onclick="closeModal('payment-modal')"></div>
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md relative z-10">
+            <div class="flex justify-between items-center p-5 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-800">Add Transaction</h3>
+                <button onclick="closeModal('payment-modal')" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
+            </div>
+            <form id="payment-form" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Transaction Type *</label>
+                    <select id="pay-type" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none bg-white">
+                        <option value="Payment">Client Payment (Credit)</option>
+                        <option value="Duty Fee">Add Charge: Duty Fee (Debit)</option>
+                        <option value="Service Fee">Add Charge: Service Fee (Debit)</option>
+                        <option value="Transport Fee">Add Charge: Transport Fee (Debit)</option>
+                        <option value="Other Charge">Add Charge: Other (Debit)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Amount (₦) *</label>
+                    <input type="number" id="pay-amount" step="0.01" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Description / Memo</label>
+                    <input type="text" id="pay-desc" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="e.g., Wire Transfer Ref 1234">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Date *</label>
+                    <input type="date" id="pay-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('payment-modal')" class="px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition font-medium">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PDF TEMPLATES -->
+    <div id="print-templates">
+        
+        <!-- Receipt Template -->
+        <div id="pdf-receipt" class="a4-page">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 15px; margin-bottom: 25px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 60px; height: 60px; border-radius: 50%;" crossorigin="anonymous">
+                    <div>
+                        <h1 style="color: #0c4a6e; font-size: 22px; font-weight: bold; margin: 0;">Cluster Synergy Limited</h1>
+                        <p style="color: #64748b; font-size: 10px; margin: 2px 0 0 0;">Suite 24 AB Plaza Tal'udu | +2348107907647 | support@clustersynergy.com</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color: #0ea5e9; font-size: 28px; font-weight: bold; margin: 0;">RECEIPT</h2>
+                    <p style="font-weight: bold; margin: 3px 0 0 0;">Receipt #: <span id="rct-id" style="font-weight: normal;"></span></p>
+                    <p style="margin: 2px 0 0 0;">Date: <span id="rct-date"></span></p>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <div style="width: 45%;">
+                    <h4 style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">Received From:</h4>
+                    <p style="font-weight: bold; font-size: 15px; margin: 0;" id="rct-client-name"></p>
+                    <p style="color: #475569; margin: 5px 0 0 0; font-size: 13px;" id="rct-client-address"></p>
+                </div>
+                <div style="width: 45%;">
+                    <h4 style="color: #94a3b8; font-size: 11px; text-transform: uppercase;">Shipment Reference:</h4>
+                    <p style="font-weight: bold; font-size: 15px; margin: 0;" id="rct-job-id"></p>
+                    <p style="color: #475569; margin: 5px 0 0 0; font-size: 13px;">BL: <span id="rct-bl"></span></p>
+                </div>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                <thead>
+                    <tr style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1;">
+                        <th style="padding: 10px; text-align: left;">Description</th>
+                        <th style="padding: 10px; text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td style="padding: 15px 10px;" id="rct-desc"></td><td style="padding: 15px 10px; text-align: right; font-weight: bold; color: #059669;" id="rct-amount"></td></tr>
+                </tbody>
+            </table>
+
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+                <div style="width: 280px; border-top: 2px solid #e2e8f0; padding-top: 12px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: bold;">Remaining Balance:</span>
+                        <span style="font-weight: bold; color: #ef4444;" id="rct-balance"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px;">
+                <div id="rct-qr-container"></div>
+                <div class="official-stamp"><div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color:#ef4444;">★ OFFICIAL ★</span><br>STAMP</div></div>
+                <div style="text-align:center; width:180px;"><div style="border-bottom:1px solid #000; height:25px;"></div><span style="font-size:11px;">Authorized Signature</span></div>
+            </div>
+            <div style="text-align:center; color:#64748b; font-size:10px; margin-top:30px; border-top:1px solid #e2e8f0; padding-top:12px;">
+                <p>Valid with official stamp and signature. Generated by: <span id="rct-gen-by"></span></p>
+            </div>
+        </div>
+
+        <!-- Statement Template -->
+        <div id="pdf-statement" class="a4-page">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 15px; margin-bottom: 25px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 60px; height: 60px; border-radius: 50%;" crossorigin="anonymous">
+                    <div>
+                        <h1 style="color: #0c4a6e; font-size: 22px; font-weight: bold; margin: 0;">Cluster Synergy Limited</h1>
+                        <p style="color: #64748b; font-size: 10px; margin: 2px 0 0 0;">Suite 24 AB Plaza Tal'udu | +2348107907647 | support@clustersynergy.com</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color: #0ea5e9; font-size: 26px; font-weight: bold; margin: 0;">STATEMENT</h2>
+                    <p style="margin: 3px 0 0 0;">Job ID: <span id="stmt-job-id"></span></p>
+                    <p>Generated: <span id="stmt-date"></span></p>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 25px; background: #f8fafc; padding: 12px; border-radius: 6px;">
+                <div><strong>Client:</strong> <span id="stmt-client-name"></span><br><span style="font-size:11px;" id="stmt-client-contact"></span></div>
+                <div><strong>BL:</strong> <span id="stmt-bl"></span> | <strong>Port:</strong> <span id="stmt-port"></span><br><span style="font-size:11px;" id="stmt-desc"></span></div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:12px;">
+                <thead><tr style="background:#f1f5f9;"><th>Date</th><th>Description</th><th style="text-align:right;">Charge</th><th style="text-align:right;">Payment</th></tr></thead>
+                <tbody id="stmt-table-body"></tbody>
+            </table>
+
+            <div style="display:flex; justify-content:flex-end; margin-bottom:30px;">
+                <div style="width:300px;">
+                    <div style="display:flex; justify-content:space-between;"><span>Total Charges:</span><span id="stmt-total-charges"></span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Total Payments:</span><span style="color:#059669;" id="stmt-total-paid"></span></div>
+                    <div style="display:flex; justify-content:space-between; border-top:2px solid #cbd5e1; padding-top:8px; margin-top:5px;"><span style="font-weight:bold;">Balance Due:</span><span style="font-weight:bold; color:#ef4444;" id="stmt-balance"></span></div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:50px;">
+                <div id="stmt-qr-container"></div>
+                <div class="official-stamp"><div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color:#ef4444;">★ OFFICIAL ★</span><br>STAMP</div></div>
+                <div style="text-align:center;"><div style="border-bottom:1px solid #000; height:25px;"></div>Authorized Signature</div>
+            </div>
+            <div style="text-align:center; font-size:10px; margin-top:30px; border-top:1px solid #e2e8f0; padding-top:10px;">Generated by: <span id="stmt-gen-by"></span></div>
+        </div>
+
+        <!-- Global Statement Template -->
+        <div id="pdf-global-statement" class="a4-page">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 15px; margin-bottom: 25px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 60px; height: 60px; border-radius: 50%;" crossorigin="anonymous">
+                    <div>
+                        <h1 style="color: #0c4a6e; font-size: 22px; font-weight: bold; margin: 0;">Cluster Synergy Limited</h1>
+                        <p style="color: #64748b; font-size: 10px;">Suite 24 AB Plaza Tal'udu | +2348107907647</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color: #0ea5e9; font-size: 24px; font-weight: bold;">GLOBAL REVENUE</h2>
+                    <p>Generated: <span id="gst-date"></span></p>
+                </div>
+            </div>
+
+            <div style="background:#f8fafc; padding:15px; text-align:center; border-radius:6px; margin-bottom:20px;">
+                <p style="margin:0;">Total System Revenue</p>
+                <h3 style="font-size:28px; color:#0284c7; margin:5px 0;" id="gst-total-revenue">₦0.00</h3>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:30px;">
+                <thead><tr style="background:#f1f5f9;"><th>Date</th><th>Job ID / Client</th><th>Description</th><th style="text-align:right;">Charge</th><th style="text-align:right;">Collection</th></tr></thead>
+                <tbody id="gst-table-body"></tbody>
+            </table>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:40px;">
+                <div id="gst-qr-container"></div>
+                <div class="official-stamp"><div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color:#ef4444;">★ OFFICIAL ★</span><br>STAMP</div></div>
+                <div style="text-align:center;">Director Signature</div>
+            </div>
+            <div style="text-align:center; font-size:10px; margin-top:25px;">Generated by: <span id="gst-gen-by"></span></div>
+        </div>
+
+        <!-- REDESIGNED CLIENT AGREEMENT (Fits A4 one page) -->
+        <div id="pdf-agreement" class="a4-page agreement-compact">
+            <div style="display: flex; align-items: center; gap: 12px; border-bottom: 1.5px solid #0ea5e9; padding-bottom: 8px; margin-bottom: 10px;">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 45px; height: 45px; border-radius: 50%;" crossorigin="anonymous">
+                <div>
+                    <h2 style="color:#0c4a6e; font-size:18px; margin:0;">CLUSTER SYNERGY LIMITED</h2>
+                    <p style="font-size:9px; margin:2px 0;">Suite 24 AB Plaza Tal'udu | +2348107907647 | www.clustersynergy.com | support@clustersynergy.com</p>
+                </div>
+                <div style="margin-left: auto; text-align: right;">
+                    <h3 style="color:#0ea5e9; font-size:16px; margin:0;">CUSTOM CLEARING<br>AGENCY AGREEMENT</h3>
+                </div>
+            </div>
+
+            <p style="margin:5px 0;">This Agreement made on <span id="agr-day">___</span> day of <span id="agr-month">_______</span>, <span id="agr-year">20___</span></p>
+            
+            <div style="display: flex; gap: 20px; margin: 8px 0;">
+                <div style="flex:1;"><strong>BETWEEN:</strong> Cluster Synergy Limited ("Clearing Agent")</div>
+                <div style="flex:1;"><strong>AND:</strong> <span id="agr-client-name"></span> <span id="agr-company"></span> ("Client")</div>
+            </div>
+            <div style="background:#f8fafc; padding:6px 10px; border-radius:4px; margin:5px 0;">
+                <strong>Client Details:</strong> Address: <span id="agr-address"></span> | Phone: <span id="agr-phone"></span> | Email: <span id="agr-email"></span>
+            </div>
+
+            <h4>1. APPOINTMENT</h4>
+            <p>Client appoints Agent to handle clearing and forwarding of goods on their behalf.</p>
+
+            <h4>2. SHIPMENT DETAILS (per shipment)</h4>
+            <p>Description: _____________ | Container: _____________ | BL: _____________ | Port: _____________ | ETA: _____________</p>
+
+            <h4>3. SCOPE OF SERVICES</h4>
+            <p>Process customs documentation, duty assessment/payments, clearance, delivery arrangement.</p>
+
+            <h4>4. SERVICE CHARGES</h4>
+            <p>Duty Fees: ₦________ | Service: ₦________ | Transport: ₦________ | Other: ₦________ | <strong>Total: ₦________</strong></p>
+
+            <h4>5. PAYMENT TERMS</h4>
+            <p>Payments may be in full or installments; all payments due before final release unless otherwise agreed.</p>
+
+            <div style="display: flex; gap: 15px; margin: 5px 0;">
+                <div style="flex:1;">
+                    <h4>6. CLIENT RESPONSIBILITIES</h4>
+                    <p>Provide accurate docs, pay charges timely, comply with regulations.</p>
+                </div>
+                <div style="flex:1;">
+                    <h4>7. AGENT RESPONSIBILITIES</h4>
+                    <p>Act professionally, keep client informed, proper handling.</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <div style="flex:1;">
+                    <h4>8. DELAYS & LIABILITY</h4>
+                    <p>Agent not liable for delays by customs, port congestion, incomplete docs.</p>
+                </div>
+                <div style="flex:1;">
+                    <h4>9. DEFAULT</h4>
+                    <p>Failure to pay may result in clearance delay, document withholding, legal action.</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <div style="flex:1;"><h4>10. TERMINATION</h4><p>Either party may terminate with written notice subject to settlement.</p></div>
+                <div style="flex:1;"><h4>11. GOVERNING LAW</h4><p>Federal Republic of Nigeria.</p></div>
+            </div>
+            <h4>12. DECLARATION</h4>
+            <p>Both parties agree to the terms and conditions stated herein.</p>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <div style="width:45%;"><strong>For Cluster Synergy Limited</strong><br>Name: ___________________<br>Signature: _______________<br>Date: ___________________</div>
+                <div style="width:45%;"><strong>Client</strong><br>Name: ___________________<br>Signature: _______________<br>Date: ___________________</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 12px;">
+                <div id="agr-qr-container"></div>
+                <div class="official-stamp" style="width:100px; height:100px;"><div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color:#ef4444;">★ OFFICIAL ★</span><br>STAMP</div></div>
+                <div style="font-size:9px; text-align:right;">Generated by: <span id="agr-gen-by"></span><br>Valid with stamp & signature</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhTk3U0iNs4beOa5CZa-8aaEzWfJWreQg",
+            authDomain: "csl-soft.firebaseapp.com",
+            projectId: "csl-soft",
+            storageBucket: "csl-soft.firebasestorage.app",
+            messagingSenderId: "596366353168",
+            appId: "1:596366353168:web:8b305587779e727a893b95"
+        };
+        
+        const appId = 'csc-ms-default';
+        let app, auth, db, currentUser = null, activeListeners = [], appUser = null;
+        let dbClients = [], dbShipments = [], dbPayments = [], currentActiveShipmentId = null;
+
+        const formatMoney = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount || 0);
+        const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+        const getStatusBadge = (status) => {
+            const colors = { 'Pending':'bg-amber-100 text-amber-800','Documentation':'bg-blue-100 text-blue-800','Duty Assessment':'bg-purple-100 text-purple-800','Payment':'bg-rose-100 text-rose-800','Cleared':'bg-emerald-100 text-emerald-800','Delivered':'bg-slate-200 text-slate-800' };
+            return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${colors[status] || 'bg-gray-100'}">${status}</span>`;
+        };
+
+        // Initialize Firebase
+        const initSystem = async () => {
+            try {
+                app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) await signInWithCustomToken(auth, token);
+                else await signInAnonymously(auth).catch(() => console.warn("Anonymous disabled"));
+            } catch (e) { console.warn("Firebase init error"); }
+            onAuthStateChanged(auth, (user) => { if(user) currentUser = user; else currentUser = { uid: 'csl-fallback' }; });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSystem();
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('client-form').addEventListener('submit', saveClient);
+            document.getElementById('shipment-form').addEventListener('submit', saveShipment);
+            document.getElementById('payment-form').addEventListener('submit', savePayment);
+            document.getElementById('pay-date').valueAsDate = new Date();
+        });
+
+        window.nav = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-slate-800','text-white'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            const titles = { dashboard:'Dashboard', clients:'Client Management', shipments:'Shipment Pipeline', finance:'Financial Ledger', 'shipment-details':'Shipment Details' };
+            document.getElementById('page-title').innerText = titles[viewId] || '';
+            const btn = document.querySelector(`.nav-btn[data-target="${viewId}"]`);
+            if(btn) btn.classList.add('bg-slate-800','text-white');
+            if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
+        };
+
+        window.openModal = (id) => { document.getElementById(id).classList.remove('hidden'); document.body.classList.add('modal-open'); };
+        window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); document.body.classList.remove('modal-open'); };
+
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('user-email').value.trim();
+            const pass = document.getElementById('user-pass').value;
+            if (email === 'babangida@clustersynergy.com' && pass === 'Gausau123') appUser = { name:'Umar Ibrahim', role:'Manager', initials:'UI' };
+            else if (email === 'aliyu@clustersynergy.com' && pass === 'Gusau123') appUser = { name:'Aliyu Bashir', role:'Director Operations', initials:'AB' };
+            else return Swal.fire('Access Denied','Invalid credentials.','error');
+            
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('auth-spinner').classList.remove('hidden');
+            setTimeout(() => {
+                if(!currentUser && auth?.currentUser) currentUser = auth.currentUser;
+                if(!currentUser) currentUser = { uid: 'csl-fallback' };
+                document.getElementById('sidebar-user-name').innerText = appUser.name;
+                document.getElementById('sidebar-user-role').innerText = appUser.role;
+                document.getElementById('sidebar-user-initials').innerText = appUser.initials;
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('app-layout').classList.remove('hidden');
+                startDataSync();
+                nav('dashboard');
+            }, 800);
+        };
+
+        window.logout = () => Swal.fire({ title:'Logout?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444' }).then(r => { if(r.isConfirmed) location.reload(); });
+
+        const startDataSync = () => {
+            const uid = currentUser?.uid || 'csl-fallback';
+            const clientsRef = collection(db, 'artifacts', appId, 'users', uid, 'clients');
+            const shipmentsRef = collection(db, 'artifacts', appId, 'users', uid, 'shipments');
+            const paymentsRef = collection(db, 'artifacts', appId, 'users', uid, 'payments');
+            
+            const unsub1 = onSnapshot(clientsRef, snap => { dbClients = snap.docs.map(d => ({ id:d.id, ...d.data() })); renderClients(); populateClientDropdown(); });
+            const unsub2 = onSnapshot(shipmentsRef, snap => { dbShipments = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>b.createdAt-a.createdAt); renderShipments(); updateDashboardStats(); if(currentActiveShipmentId) renderShipmentDetails(currentActiveShipmentId); });
+            const unsub3 = onSnapshot(paymentsRef, snap => { dbPayments = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>new Date(b.date)-new Date(a.date)); renderGlobalFinance(); if(currentActiveShipmentId) renderShipmentPayments(currentActiveShipmentId); });
+            activeListeners = [unsub1, unsub2, unsub3];
+        };
+
+        const updateDashboardStats = () => {
+            const total = dbShipments.length;
+            const pending = dbShipments.filter(s => s.status==='Pending'||s.status==='Documentation').length;
+            const cleared = dbShipments.filter(s => s.status==='Cleared'||s.status==='Delivered').length;
+            let totalCharges=0, totalCollected=0;
+            dbShipments.forEach(s => { totalCharges+=Number(s.totalAmount)||0; totalCollected+=Number(s.paidAmount)||0; });
+            document.getElementById('stat-total-shipments').innerText=total;
+            document.getElementById('stat-pending').innerText=pending;
+            document.getElementById('stat-cleared').innerText=cleared;
+            document.getElementById('stat-balance').innerText=formatMoney(totalCharges-totalCollected);
+            document.getElementById('stat-revenue').innerText=formatMoney(totalCharges);
+            document.getElementById('stat-collected').innerText=formatMoney(totalCollected);
+            document.getElementById('bar-collected').style.width = totalCharges>0 ? `${(totalCollected/totalCharges)*100}%` : '0%';
+            const recent = dbShipments.slice(0,5);
+            document.getElementById('dashboard-recent-table').innerHTML = recent.map(s => {
+                const c = dbClients.find(x=>x.id===s.clientId);
+                return `<tr class="hover:bg-slate-50 cursor-pointer" onclick="viewShipment('${s.id}')"><td class="p-4 font-medium text-brand-600">${s.jobId}</td><td class="p-4">${c?.name||'Unknown'}</td><td class="p-4">${getStatusBadge(s.status)}</td><td class="p-4 text-right">${formatDate(s.arrivalDate)}</td></tr>`;
+            }).join('') || '<tr><td colspan="4" class="p-4 text-center">No shipments</td></tr>';
+        };
+
+        const renderClients = (filter='') => {
+            const f = filter.toLowerCase();
+            const filtered = dbClients.filter(c => c.name.toLowerCase().includes(f) || (c.company||'').toLowerCase().includes(f) || (c.tin||'').toLowerCase().includes(f));
+            document.getElementById('clients-table').innerHTML = filtered.map(c => `
+                <tr><td class="p-4"><p class="font-bold">${c.name}</p><p class="text-xs">${c.company||'-'}</p></td>
+                <td class="p-4"><p>${c.phone}</p><p class="text-xs">${c.email||'-'}</p></td>
+                <td class="p-4"><p class="truncate w-48">${c.address||'-'}</p><p class="text-xs font-mono">TIN: ${c.tin||'-'}</p></td>
+                <td class="p-4 text-xs">${c.createdBy||'-'}</td>
+                <td class="p-4 text-right">
+                    <button onclick="editClient('${c.id}')" class="text-brand-600 p-2"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="downloadClientAgreement('${c.id}')" class="text-emerald-600 p-2" title="Download Agreement"><i class="fa-solid fa-file-contract"></i></button>
+                    <button onclick="deleteClient('${c.id}')" class="text-red-500 p-2"><i class="fa-solid fa-trash"></i></button>
+                </td></tr>
+            `).join('') || '<tr><td colspan="5" class="p-8 text-center">No clients</td></tr>';
+        };
+        window.filterClients = () => renderClients(document.getElementById('search-clients').value);
+        
+        const populateClientDropdown = () => {
+            document.getElementById('ship-client').innerHTML = '<option value="">-- Choose Client --</option>' + dbClients.map(c => `<option value="${c.id}">${c.name} ${c.company?`(${c.company})`:''}</option>`).join('');
+        };
+
+        const saveClient = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('client-id').value;
+            const data = {
+                name: document.getElementById('client-name').value, company: document.getElementById('client-company').value,
+                phone: document.getElementById('client-phone').value, email: document.getElementById('client-email').value,
+                tin: document.getElementById('client-tin').value, address: document.getElementById('client-address').value,
+                updatedAt: Date.now(), updatedBy: appUser.name
+            };
+            try {
+                const ref = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'clients');
+                if(id) await updateDoc(doc(ref, id), data);
+                else { data.createdAt = Date.now(); data.createdBy = appUser.name; await addDoc(ref, data); }
+                Swal.fire('Success','Client saved.','success'); closeModal('client-modal');
+            } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        };
+        window.editClient = (id) => {
+            const c = dbClients.find(x=>x.id===id); if(!c) return;
+            document.getElementById('client-id').value = c.id; document.getElementById('client-name').value = c.name; document.getElementById('client-company').value = c.company||'';
+            document.getElementById('client-phone').value = c.phone; document.getElementById('client-email').value = c.email||''; document.getElementById('client-tin').value = c.tin||'';
+            document.getElementById('client-address').value = c.address||''; document.getElementById('client-modal-title').innerText = 'Edit Client';
+            openModal('client-modal');
+        };
+        window.deleteClient = (id) => {
+            if(dbShipments.some(s=>s.clientId===id)) return Swal.fire('Blocked','Client has shipments.','warning');
+            Swal.fire({ title:'Delete?', icon:'warning', showCancelButton:true, confirmButtonColor:'#ef4444' }).then(async r => {
+                if(r.isConfirmed) { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id)); Swal.fire('Deleted','','success'); }
+            });
+        };
+
+        window.openShipmentModal = () => { if(dbClients.length===0) Swal.fire('Info','Add a client first.'); else openModal('shipment-modal'); };
+        const renderShipments = () => {
+            const search = document.getElementById('search-shipments').value.toLowerCase();
+            const status = document.getElementById('filter-status').value;
+            const filtered = dbShipments.filter(s => (s.jobId.toLowerCase().includes(search)||s.bl.toLowerCase().includes(search)) && (!status||s.status===status));
+            document.getElementById('shipments-table').innerHTML = filtered.map(s => {
+                const c = dbClients.find(x=>x.id===s.clientId);
+                return `<tr class="hover:bg-slate-50 cursor-pointer" onclick="viewShipment('${s.id}')"><td class="p-4"><p class="font-bold text-brand-600">${s.jobId}</p><p class="text-xs">BL: ${s.bl}</p></td><td class="p-4">${c?.name||'Unknown'}</td><td class="p-4"><p class="truncate w-48">${s.description}</p><p class="text-xs">${s.port}</p></td><td class="p-4">${getStatusBadge(s.status)}</td><td class="p-4 text-right"><button class="bg-slate-100 px-3 py-1.5 rounded text-sm">Manage</button></td></tr>`;
+            }).join('') || '<tr><td colspan="5" class="p-8 text-center">No shipments</td></tr>';
+        };
+        window.filterShipments = renderShipments;
+        const saveShipment = async (e) => {
+            e.preventDefault();
+            const clientId = document.getElementById('ship-client').value;
+            const client = dbClients.find(c=>c.id===clientId);
+            const year = new Date().getFullYear();
+            const count = dbShipments.filter(s=>s.jobId?.includes(`CSC-${year}`)).length;
+            const jobId = `CSC-${year}-${String(count+1).padStart(3,'0')}`;
+            const data = {
+                jobId, clientId, clientName: client.name, clientEmail: client.email,
+                bl: document.getElementById('ship-bl').value, containerNo: document.getElementById('ship-container').value,
+                port: document.getElementById('ship-port').value, arrivalDate: document.getElementById('ship-date').value,
+                description: document.getElementById('ship-desc').value, status: 'Pending', totalAmount:0, paidAmount:0,
+                createdAt: Date.now(), createdBy: appUser.name
+            };
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'shipments'), data);
+                Swal.fire('Success',`Shipment ${jobId} created.`); closeModal('shipment-modal');
+            } catch(e) { Swal.fire('Error',e.message,'error'); }
+        };
+        window.viewShipment = (id) => { currentActiveShipmentId = id; renderShipmentDetails(id); renderShipmentPayments(id); nav('shipment-details'); };
+        const renderShipmentDetails = (id) => {
+            const s = dbShipments.find(x=>x.id===id); if(!s) return;
+            const c = dbClients.find(x=>x.id===s.clientId);
+            document.getElementById('det-jobId').innerText = s.jobId;
+            document.getElementById('det-clientName').innerText = c ? `${c.name} ${c.company?`(${c.company})`:''}` : 'Unknown';
+            document.getElementById('det-createdBy').innerText = `Created By: ${s.createdBy||'-'}`;
+            document.getElementById('det-status-badge').outerHTML = `<span id="det-status-badge">${getStatusBadge(s.status)}</span>`;
+            document.getElementById('det-bl').innerText = s.bl; document.getElementById('det-container').innerText = s.containerNo||'-';
+            document.getElementById('det-port').innerText = s.port; document.getElementById('det-date').innerText = formatDate(s.arrivalDate);
+            document.getElementById('det-desc').innerText = s.description;
+            const shipPays = dbPayments.filter(p=>p.shipmentId===id);
+            let charges=0, paid=0; shipPays.forEach(p=> p.type==='Payment'? paid+=Number(p.amount): charges+=Number(p.amount));
+            if(s.totalAmount!==charges || s.paidAmount!==paid) updateDoc(doc(db,'artifacts',appId,'users',currentUser.uid,'shipments',id),{totalAmount:charges,paidAmount:paid});
+            document.getElementById('det-total').innerText = formatMoney(charges);
+            document.getElementById('det-paid').innerText = formatMoney(paid);
+            document.getElementById('det-balance').innerText = formatMoney(charges-paid);
+        };
+        window.openStatusModal = () => { const s = dbShipments.find(x=>x.id===currentActiveShipmentId); if(s) { document.getElementById('update-status-select').value = s.status; openModal('status-modal'); } };
+        window.saveStatusUpdate = async () => {
+            if(!currentActiveShipmentId) return;
+            await updateDoc(doc(db,'artifacts',appId,'users',currentUser.uid,'shipments',currentActiveShipmentId),{status:document.getElementById('update-status-select').value, updatedBy:appUser.name});
+            Swal.fire({icon:'success',title:'Updated',timer:1200,showConfirmButton:false}); closeModal('status-modal');
+        };
+
+        window.openPaymentModal = () => openModal('payment-modal');
+        const savePayment = async (e) => {
+            e.preventDefault();
+            const s = dbShipments.find(x=>x.id===currentActiveShipmentId);
+            const data = {
+                shipmentId: currentActiveShipmentId, jobId: s?.jobId, clientName: s?.clientName, clientEmail: s?.clientEmail,
+                type: document.getElementById('pay-type').value, amount: Number(document.getElementById('pay-amount').value),
+                description: document.getElementById('pay-desc').value || document.getElementById('pay-type').value,
+                date: document.getElementById('pay-date').value, createdAt: Date.now(), addedBy: appUser.name
+            };
+            try {
+                const docRef = await addDoc(collection(db,'artifacts',appId,'users',currentUser.uid,'payments'), data);
+                Swal.fire({icon:'success',title:'Saved',timer:1200}); closeModal('payment-modal');
+                if(data.type==='Payment') Swal.fire({title:'Generate Receipt?',showCancelButton:true,confirmButtonText:'Yes'}).then(r=>{ if(r.isConfirmed) generateReceipt(docRef.id); });
+            } catch(e) { Swal.fire('Error',e.message,'error'); }
+        };
+        const renderShipmentPayments = (id) => {
+            const pays = dbPayments.filter(p=>p.shipmentId===id);
+            document.getElementById('payments-table').innerHTML = pays.map(p => {
+                const isPay = p.type==='Payment';
+                return `<tr><td class="p-4">${formatDate(p.date)}</td><td class="p-4">${p.description}</td><td class="p-4 text-xs">${p.addedBy||'-'}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs ${isPay?'bg-emerald-50 text-emerald-600':'bg-slate-50'}">${p.type}</span></td><td class="p-4 text-right font-bold ${isPay?'text-emerald-600':''}">${formatMoney(p.amount)}</td><td class="p-4 text-center">${isPay?`<button onclick="generateReceipt('${p.id}')" class="text-brand-600"><i class="fa-solid fa-print"></i></button>`:'-'} <button onclick="deletePayment('${p.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            }).join('') || '<tr><td colspan="6" class="p-8 text-center">No transactions</td></tr>';
+        };
+        const renderGlobalFinance = () => {
+            document.getElementById('finance-total-revenue').innerText = formatMoney(dbShipments.reduce((s,sh)=>s+(Number(sh.totalAmount)||0),0));
+            document.getElementById('finance-table').innerHTML = dbPayments.map(p => {
+                const s = dbShipments.find(x=>x.id===p.shipmentId);
+                return `<tr><td class="p-4">${formatDate(p.date)}</td><td class="p-4 font-bold text-brand-600 cursor-pointer" onclick="viewShipment('${p.shipmentId}')">${s?.jobId||'-'}</td><td class="p-4">${p.clientName||'-'}</td><td class="p-4">${p.description}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs ${p.type==='Payment'?'bg-emerald-50 text-emerald-600':'bg-slate-50'}">${p.type}</span></td><td class="p-4 text-right font-bold ${p.type==='Payment'?'text-emerald-600':''}">${formatMoney(p.amount)}</td></tr>`;
+            }).join('') || '<tr><td colspan="6" class="p-8 text-center">No records</td></tr>';
+        };
+        window.deletePayment = (id) => Swal.fire({title:'Delete?',icon:'warning',showCancelButton:true,confirmButtonColor:'#ef4444'}).then(async r => { if(r.isConfirmed) await deleteDoc(doc(db,'artifacts',appId,'users',currentUser.uid,'payments',id)); });
+
+        // ========== FIXED PDF GENERATION ==========
+        const executePDF = (elementId, filename) => {
+            const template = document.getElementById(elementId);
+            if (!template) return Swal.fire('Error', 'Template not found', 'error');
+            
+            document.body.classList.add('pdf-capturing');
+            
+            const opt = {
+                margin: [5, 0, 5, 0],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            Swal.fire({
+                title: 'Generating PDF...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            setTimeout(() => {
+                html2pdf().set(opt).from(template).save().then(() => {
+                    document.body.classList.remove('pdf-capturing');
+                    Swal.close();
+                }).catch(err => {
+                    document.body.classList.remove('pdf-capturing');
+                    Swal.fire('Error', 'PDF generation failed: ' + err.message, 'error');
+                    console.error(err);
+                });
+            }, 100);
+        };
+
+        window.generateReceipt = (paymentId) => {
+            const p = dbPayments.find(x=>x.id===paymentId); if(!p) return;
+            const s = dbShipments.find(x=>x.id===p.shipmentId);
+            const c = s ? dbClients.find(x=>x.id===s.clientId) : null;
+            if(!s||!c) return;
+            document.getElementById('rct-id').innerText = `RCT-${p.createdAt.toString().slice(-6)}`;
+            document.getElementById('rct-date').innerText = formatDate(p.date);
+            document.getElementById('rct-client-name').innerText = `${c.name} ${c.company?`(${c.company})`:''}`;
+            document.getElementById('rct-client-address').innerText = c.address||'';
+            document.getElementById('rct-job-id').innerText = s.jobId;
+            document.getElementById('rct-bl').innerText = s.bl;
+            document.getElementById('rct-desc').innerText = p.description;
+            document.getElementById('rct-amount').innerText = formatMoney(p.amount);
+            const shipPays = dbPayments.filter(x=>x.shipmentId===s.id);
+            let charges=0, paid=0; shipPays.forEach(x=> x.type==='Payment'? paid+=Number(x.amount): charges+=Number(x.amount));
+            document.getElementById('rct-balance').innerText = formatMoney(charges-paid);
+            document.getElementById('rct-gen-by').innerText = `${appUser.name} (${appUser.role})`;
+            document.getElementById('rct-qr-container').innerHTML = '';
+            new QRCode(document.getElementById('rct-qr-container'), { text: `CSL Receipt|${s.jobId}|${formatMoney(p.amount)}`, width:80, height:80 });
+            executePDF('pdf-receipt', `Receipt_${s.jobId}.pdf`);
+        };
+
+        window.generateShipmentStatement = () => {
+            if(!currentActiveShipmentId) return;
+            const s = dbShipments.find(x=>x.id===currentActiveShipmentId);
+            const c = dbClients.find(x=>x.id===s.clientId);
+            document.getElementById('stmt-job-id').innerText = s.jobId;
+            document.getElementById('stmt-date').innerText = formatDate(new Date().toISOString());
+            document.getElementById('stmt-client-name').innerText = `${c.name} ${c.company?`(${c.company})`:''}`;
+            document.getElementById('stmt-client-contact').innerText = `${c.phone} | ${c.email||''}`;
+            document.getElementById('stmt-bl').innerText = s.bl; document.getElementById('stmt-port').innerText = s.port; document.getElementById('stmt-desc').innerText = s.description;
+            const pays = dbPayments.filter(p=>p.shipmentId===s.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
+            let charges=0, paid=0;
+            const tbody = document.getElementById('stmt-table-body');
+            tbody.innerHTML = pays.map(p => {
+                const isPay = p.type==='Payment'; if(isPay) paid+=p.amount; else charges+=p.amount;
+                return `<tr><td>${formatDate(p.date)}</td><td>${p.description}</td><td style="text-align:right">${isPay?'-':formatMoney(p.amount)}</td><td style="text-align:right">${isPay?formatMoney(p.amount):'-'}</td></tr>`;
+            }).join('');
+            document.getElementById('stmt-total-charges').innerText = formatMoney(charges);
+            document.getElementById('stmt-total-paid').innerText = formatMoney(paid);
+            document.getElementById('stmt-balance').innerText = formatMoney(charges-paid);
+            document.getElementById('stmt-gen-by').innerText = `${appUser.name} (${appUser.role})`;
+            document.getElementById('stmt-qr-container').innerHTML = '';
+            new QRCode(document.getElementById('stmt-qr-container'), { text: `CSL|${s.jobId}|Bal:${formatMoney(charges-paid)}`, width:80,height:80 });
+            executePDF('pdf-statement', `Statement_${s.jobId}.pdf`);
+        };
+
+        window.generateGlobalStatement = () => {
+            document.getElementById('gst-date').innerText = formatDate(new Date().toISOString());
+            document.getElementById('gst-gen-by').innerText = `${appUser.name} (${appUser.role})`;
+            const total = dbShipments.reduce((sum,s)=>sum+(Number(s.totalAmount)||0),0);
+            document.getElementById('gst-total-revenue').innerText = formatMoney(total);
+            const tbody = document.getElementById('gst-table-body');
+            tbody.innerHTML = dbPayments.map(p => {
+                const s = dbShipments.find(x=>x.id===p.shipmentId);
+                const isPay = p.type==='Payment';
+                return `<tr><td>${formatDate(p.date)}</td><td>${s?.jobId||'-'} (${p.clientName||'-'})</td><td>${p.description}</td><td style="text-align:right">${isPay?'-':formatMoney(p.amount)}</td><td style="text-align:right">${isPay?formatMoney(p.amount):'-'}</td></tr>`;
+            }).join('');
+            document.getElementById('gst-qr-container').innerHTML = '';
+            new QRCode(document.getElementById('gst-qr-container'), { text: `CSL Global Revenue ${formatMoney(total)}`, width:80,height:80 });
+            executePDF('pdf-global-statement', `Global_Revenue_Statement.pdf`);
+        };
+
+        window.downloadClientAgreement = (clientId) => {
+            const c = dbClients.find(x=>x.id===clientId); if(!c) return;
+            const today = new Date();
+            document.getElementById('agr-day').innerText = today.getDate();
+            document.getElementById('agr-month').innerText = today.toLocaleString('default',{month:'long'});
+            document.getElementById('agr-year').innerText = today.getFullYear();
+            document.getElementById('agr-client-name').innerText = c.name;
+            document.getElementById('agr-company').innerText = c.company ? ` (${c.company})` : '';
+            document.getElementById('agr-address').innerText = c.address || '_________________';
+            document.getElementById('agr-phone').innerText = c.phone;
+            document.getElementById('agr-email').innerText = c.email || '_________________';
+            document.getElementById('agr-gen-by').innerText = `${appUser.name} (${appUser.role})`;
+            document.getElementById('agr-qr-container').innerHTML = '';
+            new QRCode(document.getElementById('agr-qr-container'), { text: `CSL Agreement|${c.name}|${c.phone}`, width:80, height:80 });
+            executePDF('pdf-agreement', `Client_Agreement_${c.name.replace(/\s/g,'_')}.pdf`);
+        };
+    </script>
+</body>
+</html>

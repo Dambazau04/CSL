@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster Synergy Management System</title>
+    <!-- Favicon (updated logo) -->
+    <link rel="icon" href="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" type="image/png">
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- PDF & QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Playfair Display', 'serif'],
+                        poppins: ['Poppins', 'sans-serif']
+                    },
+                    colors: {
+                        primary: '#0a2540',    // Deep navy from logo
+                        secondary: '#1e4a7a',   // Lighter blue
+                        accent: '#c9a227',      // Gold accent
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .hidden-view { display: none !important; }
+        #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { padding: 1rem; border-radius: 0.5rem; color: white; min-width: 300px; transform: translateX(120%); transition: transform 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .toast.show { transform: translateX(0); }
+        .toast-success { background-color: #10b981; }
+        .toast-error { background-color: #ef4444; }
+        .toast-info { background-color: #3b82f6; }
+        .pdf-container { position: absolute; left: -9999px; top: 0; background: white; }
+        .a4-page { width: 210mm; min-height: 297mm; padding: 15mm; background: white; box-sizing: border-box; position: relative; color: #1e293b; font-size: 12px; font-family: 'Poppins', sans-serif; }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); }
+        
+        /* PDF Design Enhancements */
+        .pdf-logo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #c9a227; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .pdf-title { font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 1px; }
+        .pdf-table th { background-color: #0a2540; color: white; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 10px 8px; }
+        .pdf-table td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+        .pdf-watermark { position: absolute; bottom: 20px; right: 20px; opacity: 0.04; font-size: 60px; font-weight: bold; color: #0a2540; transform: rotate(-15deg); pointer-events: none; }
+        .qr-container { background: white; padding: 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .agreement-text { font-size: 11px; line-height: 1.5; }
+        .agreement-text h2, .agreement-text h3 { color: #0a2540; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- LOGIN VIEW (unchanged) -->
+    <div id="view-login" class="absolute inset-0 z-50 bg-gray-50 flex items-center justify-center hidden-view">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <div class="flex justify-center mb-6">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" alt="Logo" class="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm">
+            </div>
+            <h1 class="text-2xl font-bold text-center text-gray-900 mb-2">Cluster Synergy</h1>
+            <p class="text-center text-gray-500 mb-8 text-sm">Management System (CSMS)</p>
+            
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" placeholder="admin@clustersynergy.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" placeholder="••••••••">
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-blue-900 text-white font-semibold py-2.5 rounded-lg transition duration-200 flex justify-center items-center">
+                    <span id="login-text">Sign In</span>
+                    <i id="login-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i>
+                </button>
+            </form>
+            <div class="mt-6 text-center text-xs text-gray-400">Authorized Personnel Only.</div>
+        </div>
+    </div>
+
+    <!-- APP LAYOUT (unchanged) -->
+    <div id="app-layout" class="flex w-full h-full hidden-view">
+        
+        <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-20">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" alt="Logo" class="w-10 h-10 rounded-full bg-white">
+                <div>
+                    <h2 class="font-bold text-sm tracking-wide">CSMS PORTAL</h2>
+                    <p class="text-xs text-slate-400">Admin Dashboard</p>
+                </div>
+            </div>
+            
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-1">
+                    <li><a href="#" data-view="dashboard" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition active-nav"><i class="fas fa-chart-line w-5"></i> Dashboard</a></li>
+                    <li><a href="#" data-view="clients" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition"><i class="fas fa-users w-5"></i> Clients</a></li>
+                    <li><a href="#" data-view="plans" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition"><i class="fas fa-building w-5"></i> Properties / Plans</a></li>
+                    <li><a href="#" data-view="payments" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition"><i class="fas fa-wallet w-5"></i> Payments</a></li>
+                    <li><a href="#" data-view="receipts" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition"><i class="fas fa-file-invoice-dollar w-5"></i> Receipts</a></li>
+                    <li><a href="#" data-view="finance" class="nav-link flex items-center gap-3 px-6 py-3 text-slate-300 hover:bg-slate-800 hover:text-white transition"><i class="fas fa-chart-pie w-5"></i> Finance & Reports</a></li>
+                </ul>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-800">
+                <button id="btn-logout" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-red-600 rounded-lg text-sm transition text-slate-300 hover:text-white">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8 z-10">
+                <h2 id="header-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-right hidden sm:block">
+                        <p id="user-name" class="font-bold text-gray-800">Loading...</p>
+                        <p id="user-role" class="text-xs text-gray-500">Loading...</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-lg" id="user-initial">U</div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-8 relative" id="views-container">
+                
+                <div id="global-loader" class="absolute inset-0 bg-gray-50 bg-opacity-90 z-40 flex flex-col items-center justify-center">
+                    <i class="fas fa-circle-notch fa-spin text-4xl text-primary mb-4"></i>
+                    <p class="text-gray-600 font-medium tracking-wide">Syncing with secure server...</p>
+                </div>
+
+                <!-- DASHBOARD (unchanged) -->
+                <div id="view-dashboard" class="app-view hidden-view">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-users"></i></div><div><p class="text-sm text-gray-500 font-medium">Total Clients</p><p class="text-2xl font-bold text-gray-800" id="stat-clients">0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl"><i class="fas fa-building"></i></div><div><p class="text-sm text-gray-500 font-medium">Active Plans</p><p class="text-2xl font-bold text-gray-800" id="stat-plans">0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl"><i class="fas fa-wallet"></i></div><div><p class="text-sm text-gray-500 font-medium">Total Revenue</p><p class="text-2xl font-bold text-gray-800" id="stat-revenue">₦0</p></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl"><i class="fas fa-file-invoice"></i></div><div><p class="text-sm text-gray-500 font-medium">Receipts Issued</p><p class="text-2xl font-bold text-gray-800" id="stat-receipts">0</p></div></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Recent Transactions</h3><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th>Date</th><th>Client</th><th>Amount</th><th>Type</th></tr></thead><tbody id="dash-recent-transactions"></tbody></table></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"><h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Company Information</h3><div class="space-y-3 text-sm"><p><strong>Name:</strong> Cluster Synergy Limited</p><p><strong>Address:</strong> Suite 24 AB Plaza Tal'udu</p><p><strong>Phone:</strong> +2348107907647</p><p><strong>Email:</strong> support@clustersynergy.com</p><p><strong>Website:</strong> www.clustersynergy.com</p></div></div>
+                    </div>
+                </div>
+
+                <!-- CLIENTS (unchanged) -->
+                <div id="view-clients" class="app-view hidden-view">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="relative w-64"><input type="text" id="search-clients" placeholder="Search clients..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-primary"><i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i></div>
+                        <button onclick="openModal('modal-client')" class="bg-primary hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"><i class="fas fa-plus mr-2"></i> Add New Client</button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b"><tr><th class="px-6 py-4">Name</th><th class="px-6 py-4">Contact</th><th class="px-6 py-4">Address</th><th class="px-6 py-4">Added By</th><th class="px-6 py-4 text-right">Actions</th></tr></thead><tbody id="table-clients" class="divide-y divide-gray-100"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- PLANS (unchanged) -->
+                <div id="view-plans" class="app-view hidden-view">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">Property & Custom Clearing Plans</h3>
+                        <div class="flex gap-2">
+                            <button onclick="openModal('modal-plan')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"><i class="fas fa-plus mr-2"></i> Create Plan</button>
+                            <button onclick="openAgreementModal()" class="bg-accent hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"><i class="fas fa-file-contract mr-2"></i> Generate Agreement</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-plans"></div>
+                </div>
+
+                <!-- PAYMENTS (unchanged) -->
+                <div id="view-payments" class="app-view hidden-view">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Record New Payment</h3>
+                                <form id="form-payment" class="space-y-4">
+                                    <div><label class="block text-xs font-medium text-gray-700 mb-1">Select Client</label><select id="pay-client" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary"></select></div>
+                                    <div><label class="block text-xs font-medium text-gray-700 mb-1">Select Plan</label><select id="pay-plan" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary"></select></div>
+                                    <div><label class="block text-xs font-medium text-gray-700 mb-1">Payment Type</label><select id="pay-type" required class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary"><option value="Full">Full Payment</option><option value="Installment">Installment (Partial)</option></select></div>
+                                    <div><label class="block text-xs font-medium text-gray-700 mb-1">Amount Paid (₦)</label><input type="number" id="pay-amount" required min="1" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary"></div>
+                                    <div id="pay-installment-wrapper" class="hidden space-y-3">
+                                        <div><label class="block text-xs font-medium text-gray-700 mb-1">Total Agreed Amount (₦)</label><input type="number" id="pay-total-amount" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary bg-yellow-50"></div>
+                                        <div><label class="block text-xs font-medium text-gray-700 mb-1">Number of Months</label><input type="number" id="pay-months" min="1" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-primary"></div>
+                                    </div>
+                                    <div class="pt-4"><button type="submit" id="btn-submit-payment" class="w-full bg-primary hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition flex justify-center items-center"><span>Process Payment</span><i id="pay-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i></button></div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+                                <div class="p-4 border-b bg-gray-50 flex justify-between items-center"><h3 class="font-bold text-gray-800">Active Payments & Installments</h3></div>
+                                <div class="flex-1 overflow-auto p-0">
+                                    <table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0"><tr><th class="px-4 py-3">Client</th><th class="px-4 py-3">Plan</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Paid / Total</th><th class="px-4 py-3">Status</th><th class="px-4 py-3 text-right">Action</th></tr></thead><tbody id="table-payments" class="divide-y divide-gray-100"></tbody></table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECEIPTS (unchanged) -->
+                <div id="view-receipts" class="app-view hidden-view">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"><div class="flex justify-between items-center mb-6"><h3 class="font-bold text-gray-800 text-lg">Generated Receipts</h3></div><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b"><tr><th class="px-6 py-4">Receipt ID</th><th class="px-6 py-4">Date</th><th class="px-6 py-4">Client</th><th class="px-6 py-4">Amount</th><th class="px-6 py-4">Generated By</th><th class="px-6 py-4 text-right">Actions</th></tr></thead><tbody id="table-receipts" class="divide-y divide-gray-100"></tbody></table></div></div>
+                </div>
+
+                <!-- FINANCE (unchanged) -->
+                <div id="view-finance" class="app-view hidden-view">
+                    <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-gray-800 text-lg">Financial Overview</h3><button onclick="generateFullStatement()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2"><i class="fas fa-file-pdf"></i> Download Full Statement</button></div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-4 border-b bg-gray-50 flex gap-4"><select id="filter-finance-type" class="border rounded px-3 py-1.5 text-sm outline-none"><option value="all">All Transactions</option><option value="Full">Full Payments Only</option><option value="Installment">Installments Only</option></select></div><table class="w-full text-sm text-left text-gray-500"><thead class="text-xs text-gray-700 uppercase bg-gray-100"><tr><th class="px-6 py-4">Date</th><th class="px-6 py-4">Transaction Ref</th><th class="px-6 py-4">Client</th><th class="px-6 py-4">Description</th><th class="px-6 py-4 font-bold text-gray-900">Amount (₦)</th></tr></thead><tbody id="table-finance" class="divide-y divide-gray-100"></tbody><tfoot class="bg-gray-50 font-bold text-gray-900"><tr><td colspan="4" class="px-6 py-4 text-right uppercase">Total Revenue:</td><td class="px-6 py-4 text-lg" id="finance-total">₦0</td></tr></tfoot></table></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODALS (unchanged) -->
+    <div id="modal-client" class="fixed inset-0 modal-overlay z-50 flex justify-center items-center hidden-view"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"><div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800" id="client-modal-title">Add New Client</h3><button onclick="closeModal('modal-client')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div><form id="form-client" class="p-6 space-y-4"><input type="hidden" id="client-id"><div><label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="client-name" required class="w-full px-3 py-2 border rounded-lg text-sm"></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Phone Number</label><input type="tel" id="client-phone" required class="w-full px-3 py-2 border rounded-lg text-sm"></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label><input type="email" id="client-email" required class="w-full px-3 py-2 border rounded-lg text-sm"></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Home/Office Address</label><textarea id="client-address" required rows="2" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea></div><div class="pt-4 flex justify-end gap-3"><button type="button" onclick="closeModal('modal-client')" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button><button type="submit" class="px-4 py-2 text-sm text-white bg-primary hover:bg-blue-800 rounded-lg">Save Client</button></div></form></div></div>
+
+    <div id="modal-plan" class="fixed inset-0 modal-overlay z-50 flex justify-center items-center hidden-view"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"><div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800">Create New Plan</h3><button onclick="closeModal('modal-plan')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div><form id="form-plan" class="p-6 space-y-4"><div><label class="block text-xs font-medium text-gray-700 mb-1">Plan Name</label><input type="text" id="plan-name" required class="w-full px-3 py-2 border rounded-lg text-sm"></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-gray-700 mb-1">Price (₦)</label><input type="number" id="plan-price" required class="w-full px-3 py-2 border rounded-lg text-sm"></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Type</label><select id="plan-type" class="w-full px-3 py-2 border rounded-lg text-sm"><option value="Land">Land</option><option value="House">House</option><option value="Custom Clearing">Custom Clearing</option></select></div></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Description</label><textarea id="plan-desc" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm"></textarea></div><div class="pt-4 flex justify-end gap-3"><button type="button" onclick="closeModal('modal-plan')" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button><button type="submit" class="px-4 py-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg">Save Plan</button></div></form></div></div>
+
+    <div id="modal-add-installment" class="fixed inset-0 modal-overlay z-50 flex justify-center items-center hidden-view"><div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"><div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800">Record Monthly Installment</h3><button onclick="closeModal('modal-add-installment')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div><form id="form-add-installment" class="p-6 space-y-4"><input type="hidden" id="inst-payment-id"><div class="bg-blue-50 p-3 rounded text-sm text-blue-800 mb-4" id="inst-summary"></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Select Month (Due)</label><select id="inst-month-select" required class="w-full px-3 py-2 border rounded-lg text-sm"></select></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Amount Paid (₦)</label><input type="number" id="inst-amount" required min="1" class="w-full px-3 py-2 border rounded-lg text-sm"></div><div class="pt-4 flex justify-end gap-3"><button type="button" onclick="closeModal('modal-add-installment')" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button><button type="submit" class="px-4 py-2 text-sm text-white bg-primary hover:bg-blue-800 rounded-lg flex items-center">Add Payment <i id="inst-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i></button></div></form></div></div>
+
+    <div id="modal-agreement" class="fixed inset-0 modal-overlay z-50 flex justify-center items-center hidden-view"><div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-screen overflow-auto"><div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50"><h3 class="font-bold text-gray-800">Generate Purchase Agreement</h3><button onclick="closeModal('modal-agreement')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div><form id="form-agreement" class="p-6 space-y-4"><div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-medium text-gray-700 mb-1">Select Client</label><select id="agr-client" required class="w-full px-3 py-2 border rounded-lg text-sm"></select></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Select Plan</label><select id="agr-plan" required class="w-full px-3 py-2 border rounded-lg text-sm"></select></div></div><div><label class="block text-xs font-medium text-gray-700 mb-1">Agreement Type</label><select id="agr-type" class="w-full px-3 py-2 border rounded-lg text-sm"><option value="full">Full Payment Agreement</option><option value="installment">Installment Agreement</option></select></div><div class="pt-4 flex justify-end gap-3"><button type="button" onclick="closeModal('modal-agreement')" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button><button type="submit" class="px-4 py-2 text-sm text-white bg-primary hover:bg-blue-800 rounded-lg flex items-center"><i class="fas fa-file-pdf mr-2"></i> Generate PDF</button></div></form></div></div>
+
+    <!-- ==================== PDF TEMPLATES (UPDATED WITH NEW LOGO & COLORS) ==================== -->
+    
+    <!-- RECEIPT TEMPLATE -->
+    <div class="pdf-container">
+        <div id="print-receipt-template" class="a4-page relative overflow-hidden" style="background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);">
+            <div class="pdf-watermark">RECEIPT</div>
+            
+            <div class="flex justify-between items-start pdf-header">
+                <div class="flex items-center gap-5">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" alt="Logo" class="pdf-logo">
+                    <div>
+                        <h1 class="text-3xl font-display font-bold text-primary tracking-tight">Cluster Synergy</h1>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mt-1">Limited</p>
+                        <div class="flex items-center gap-3 mt-2 text-[11px] text-gray-600">
+                            <span><i class="fas fa-map-pin text-accent mr-1"></i> Suite 24 AB Plaza Tal'udu</span>
+                            <span><i class="fas fa-phone-alt text-accent mr-1"></i> +2348107907647</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="bg-primary text-white px-6 py-3 rounded-lg shadow-md">
+                        <p class="text-xs opacity-80">Official Receipt</p>
+                        <p class="text-2xl font-bold tracking-wider" id="pr-id">REC-XXXX</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="pr-date">Issued: DD/MM/YYYY</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl mb-8 border-l-4 border-accent shadow-sm">
+                <h3 class="text-sm font-bold text-primary mb-3 flex items-center"><i class="fas fa-user-circle mr-2 text-accent"></i> Received From</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Client Name</p>
+                        <p class="font-bold text-lg text-gray-800" id="pr-client-name">John Doe</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Contact</p>
+                        <p class="font-medium text-gray-700" id="pr-client-contact">0800000000</p>
+                    </div>
+                </div>
+            </div>
+
+            <table class="w-full mb-8 border-collapse pdf-table">
+                <thead>
+                    <tr>
+                        <th class="rounded-tl-lg">Description</th>
+                        <th>Payment Type</th>
+                        <th class="rounded-tr-lg text-right">Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="font-medium" id="pr-desc">Plan Name</td>
+                        <td id="pr-type">Full Payment</td>
+                        <td class="text-right font-bold text-primary text-lg" id="pr-amount">₦0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="flex justify-end mb-12">
+                <div class="w-72 bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between py-2 border-b border-dashed">
+                        <span class="font-semibold text-gray-600">Total Paid</span>
+                        <span class="font-black text-primary text-xl" id="pr-total">₦0.00</span>
+                    </div>
+                    <div class="flex justify-between py-2 text-sm hidden" id="pr-balance-row">
+                        <span class="text-gray-500">Remaining Balance</span>
+                        <span class="font-bold text-red-500" id="pr-balance">₦0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mt-8 pt-6 border-t border-gray-200">
+                <div class="w-1/2">
+                    <p class="text-xs text-gray-500 mb-2">Authorized Signature (Manual)</p>
+                    <div class="border-b-2 border-gray-300 w-48 mb-1"></div>
+                    <p class="text-xs text-gray-600">For Cluster Synergy Limited</p>
+                    <p class="text-[10px] text-gray-400 mt-2" id="pr-generated-by">Generated by: Admin</p>
+                </div>
+                <div class="flex flex-col items-end">
+                    <div class="qr-container">
+                        <div id="pr-qrcode"></div>
+                    </div>
+                    <p class="text-[9px] text-gray-400 mt-2">Scan to verify authenticity</p>
+                </div>
+            </div>
+
+            <div class="absolute bottom-4 left-0 right-0 text-center">
+                <p class="text-[9px] text-red-500 font-medium italic bg-red-50 py-1 px-4 inline-block rounded-full">
+                    <i class="fas fa-info-circle mr-1"></i> Computer-generated document. Signature and stamp must be applied manually.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATEMENT TEMPLATE -->
+    <div class="pdf-container">
+        <div id="print-statement-template" class="a4-page relative" style="background: #ffffff;">
+            <div class="pdf-watermark" style="opacity:0.03;">STATEMENT</div>
+            
+            <div class="flex items-center gap-5 pdf-header">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" alt="Logo" class="pdf-logo">
+                <div>
+                    <h1 class="text-2xl font-display font-bold text-primary">Cluster Synergy Limited</h1>
+                    <p class="text-xs text-gray-500">Suite 24 AB Plaza Tal'udu | +2348107907647 | support@clustersynergy.com</p>
+                </div>
+                <div class="ml-auto text-right">
+                    <h2 class="text-xl font-bold text-primary uppercase tracking-wider">Statement of Account</h2>
+                    <p class="text-xs text-gray-500 mt-1" id="ps-date">Generated: DD/MM/YYYY</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-primary to-blue-900 text-white p-5 rounded-xl shadow-md">
+                    <p class="text-xs uppercase tracking-wider opacity-80">Total Revenue</p>
+                    <p class="text-3xl font-bold mt-1" id="ps-total-revenue">₦0</p>
+                </div>
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-5 rounded-xl shadow-md">
+                    <p class="text-xs uppercase tracking-wider opacity-80">Total Transactions</p>
+                    <p class="text-3xl font-bold mt-1" id="ps-total-trx">0</p>
+                </div>
+            </div>
+
+            <table class="w-full text-[11px] border-collapse mb-10 pdf-table">
+                <thead>
+                    <tr>
+                        <th class="rounded-tl-lg">Date</th>
+                        <th>Reference</th>
+                        <th>Client</th>
+                        <th>Description</th>
+                        <th class="rounded-tr-lg text-right">Amount (₦)</th>
+                    </tr>
+                </thead>
+                <tbody id="ps-table-body"></tbody>
+            </table>
+
+            <div class="flex justify-between items-end mt-8 pt-6 border-t border-gray-200">
+                <div>
+                    <p class="text-xs text-gray-500 mb-2">Authorized Signature (Manual)</p>
+                    <div class="border-b-2 border-gray-300 w-48 mb-1"></div>
+                    <p class="text-xs text-gray-600">For Cluster Synergy Limited</p>
+                    <p class="text-[10px] text-gray-400 mt-2" id="ps-generated-by">By: Admin</p>
+                </div>
+                <div class="qr-container">
+                    <div id="ps-qrcode"></div>
+                </div>
+            </div>
+            <div class="absolute bottom-4 left-0 right-0 text-center">
+                <p class="text-[9px] text-red-500 font-medium italic bg-red-50 py-1 px-4 inline-block rounded-full">
+                    <i class="fas fa-info-circle mr-1"></i> Computer-generated document. Signature and stamp must be applied manually.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MONTHLY INSTALLMENT STATEMENT -->
+    <div class="pdf-container">
+        <div id="print-monthly-statement-template" class="a4-page relative" style="background: #fcfcfc;">
+            <div class="pdf-watermark" style="opacity:0.03;">INSTALLMENT</div>
+            
+            <div class="flex items-center gap-4 pdf-header">
+                <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" alt="Logo" class="pdf-logo">
+                <div>
+                    <h1 class="text-xl font-display font-bold text-primary">Cluster Synergy Limited</h1>
+                    <p class="text-xs text-gray-500">Installment Payment Schedule</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-5 rounded-xl mb-6 border border-gray-200">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="font-semibold text-gray-600">Client:</span> <span id="ms-client" class="font-bold"></span></div>
+                    <div><span class="font-semibold text-gray-600">Plan:</span> <span id="ms-plan" class="font-bold"></span></div>
+                    <div><span class="font-semibold text-gray-600">Total Amount:</span> <span id="ms-total" class="font-bold text-primary"></span></div>
+                    <div><span class="font-semibold text-gray-600">Duration:</span> <span id="ms-months"></span> months</div>
+                </div>
+            </div>
+
+            <table class="w-full text-[10px] border-collapse pdf-table mb-8">
+                <thead>
+                    <tr><th>Month</th><th>Due Date</th><th>Expected (₦)</th><th>Paid (₦)</th><th>Status</th><th>Receipt</th></tr>
+                </thead>
+                <tbody id="ms-table-body"></tbody>
+            </table>
+
+            <div class="flex justify-between items-end mt-8 pt-6 border-t border-gray-200">
+                <div>
+                    <p class="text-xs text-gray-500">Generated: <span id="ms-date"></span></p>
+                    <p class="text-[9px] text-red-500 italic mt-1">Computer-generated. Signature/Stamp manual.</p>
+                </div>
+                <div class="qr-container">
+                    <div id="ms-qrcode"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Main Script (with updated agreement functions) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhTk3U0iNs4beOa5CZa-8aaEzWfJWreQg",
+            authDomain: "csl-soft.firebaseapp.com",
+            projectId: "csl-soft",
+            storageBucket: "csl-soft.firebasestorage.app",
+            messagingSenderId: "596366353168",
+            appId: "1:596366353168:web:8b305587779e727a893b95"
+        };
+        const envAppId = 'csms-default';
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const ALLOWED_USERS = {
+            'babangida@clustersynergy.com': { name: 'Umar Ibrahim', role: 'Manager', pass: 'Gausau123' },
+            'aliyu@clustersynergy.com': { name: 'Aliyu Bashir', role: 'Director Operations', pass: 'Gusau123' }
+        };
+
+        let currentUserContext = null;
+        let dbUnsubscribes = [];
+        let state = { clients: [], plans: [], payments: [], receipts: [] };
+
+        const el = (id) => document.getElementById(id);
+        const formatMoney = (amt) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amt);
+        const generateId = (p) => p + '-' + Math.random().toString(36).substr(2,6).toUpperCase();
+
+        window.showToast = (msg, type='info') => {
+            const c = el('toast-container');
+            const t = document.createElement('div');
+            t.className = `toast toast-${type} flex items-center justify-between shadow-lg`;
+            t.innerHTML = `<span>${msg}</span><button onclick="this.parentElement.remove()" class="text-white"><i class="fas fa-times"></i></button>`;
+            c.appendChild(t);
+            setTimeout(()=>t.classList.add('show'),10);
+            setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},4000);
+        };
+
+        window.showView = (name) => {
+            document.querySelectorAll('.app-view, #view-login, #global-loader').forEach(v=>v.classList.add('hidden-view'));
+            if(name==='view-login') {
+                el('view-login').classList.remove('hidden-view');
+                el('app-layout').classList.add('hidden-view');
+            } else {
+                el('app-layout').classList.remove('hidden-view');
+                const tv = `view-${name}`; if(el(tv)) el(tv).classList.remove('hidden-view');
+                const nav = document.querySelector(`.nav-link[data-view="${name}"]`);
+                if(nav) {
+                    document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active-nav','bg-slate-800','text-white'));
+                    nav.classList.add('active-nav','bg-slate-800','text-white');
+                    el('header-title').textContent = nav.textContent.trim();
+                }
+            }
+        };
+
+        document.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',(e)=>{e.preventDefault(); showView(l.dataset.view);}));
+
+        const initApp = async () => {
+            const saved = sessionStorage.getItem('csms_user');
+            if(saved) {
+                currentUserContext = JSON.parse(saved);
+                await performFirebaseSignIn();
+            } else {
+                showView('view-login');
+                el('global-loader').classList.add('hidden-view');
+            }
+        };
+
+        el('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = el('login-email').value.trim(), pass = el('login-password').value.trim();
+            el('login-text').textContent="Verifying..."; el('login-spinner').classList.remove('hidden');
+            setTimeout(async () => {
+                if(ALLOWED_USERS[email] && ALLOWED_USERS[email].pass === pass) {
+                    currentUserContext = { email, ...ALLOWED_USERS[email] };
+                    sessionStorage.setItem('csms_user', JSON.stringify(currentUserContext));
+                    await performFirebaseSignIn();
+                    showToast(`Welcome, ${currentUserContext.name}`,'success');
+                } else {
+                    showToast('Invalid credentials','error');
+                    el('login-text').textContent="Sign In"; el('login-spinner').classList.add('hidden');
+                }
+            }, 800);
+        });
+
+        el('btn-logout').addEventListener('click', ()=>{
+            sessionStorage.removeItem('csms_user'); currentUserContext=null;
+            dbUnsubscribes.forEach(u=>u()); dbUnsubscribes=[];
+            showView('view-login'); showToast('Logged out','info');
+        });
+
+        const performFirebaseSignIn = async () => {
+            try {
+                await signInAnonymously(auth);
+                el('user-name').textContent = currentUserContext.name;
+                el('user-role').textContent = currentUserContext.role;
+                el('user-initial').textContent = currentUserContext.name.charAt(0);
+                showView('dashboard');
+                setupListeners();
+            } catch (error) {
+                console.error("Firebase auth error:", error);
+                showToast('Firebase connection issue. Some features may not work.', 'error');
+                el('user-name').textContent = currentUserContext.name;
+                el('user-role').textContent = currentUserContext.role;
+                el('user-initial').textContent = currentUserContext.name.charAt(0);
+                showView('dashboard');
+                setupListeners();
+            }
+        };
+
+        const getColPath = (col) => `artifacts/${envAppId}/public/data/${col}`;
+
+        const setupListeners = () => {
+            el('global-loader').classList.remove('hidden-view');
+            ['clients','plans','payments','receipts'].forEach(c => {
+                const unsub = onSnapshot(collection(db, getColPath(c)), (snap) => {
+                    state[c] = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.createdAt - a.createdAt);
+                    updateUI();
+                }, (err) => {
+                    console.warn(`Error listening to ${c}:`, err);
+                    showToast(`Unable to sync ${c}. Check Firestore rules.`, 'error');
+                });
+                dbUnsubscribes.push(unsub);
+            });
+        };
+
+        const updateUI = () => {
+            renderDashboard(); renderClients(); renderPlans(); renderPayments(); renderReceipts(); renderFinance(); populateSelects();
+        };
+
+        const sendEmailMock = (email,type,id) => { console.log(`Email to ${email}: ${type} ${id}`); showToast(`Email notification sent`,'info'); };
+
+        const renderDashboard = () => {
+            el('stat-clients').textContent = state.clients.length;
+            el('stat-plans').textContent = state.plans.length;
+            el('stat-receipts').textContent = state.receipts.length;
+            const rev = state.receipts.reduce((s,r)=>s+Number(r.amount),0);
+            el('stat-revenue').textContent = formatMoney(rev);
+            el('dash-recent-transactions').innerHTML = state.receipts.slice(0,5).map(r=>`<tr><td>${new Date(r.createdAt).toLocaleDateString()}</td><td>${r.clientName}</td><td class="text-emerald-600 font-bold">${formatMoney(r.amount)}</td><td>${r.type}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center p-4">No transactions</td></tr>';
+        };
+
+        const renderClients = () => {
+            const term = el('search-clients').value.toLowerCase();
+            const filtered = state.clients.filter(c=>c.name.toLowerCase().includes(term)||c.phone.includes(term));
+            el('table-clients').innerHTML = filtered.map(c=>`<tr><td class="px-6 py-4 font-medium">${c.name}</td><td>${c.phone}<br><span class="text-xs">${c.email}</span></td><td>${c.address}</td><td>${c.createdBy}</td><td class="text-right"><button onclick="editClient('${c.id}')" class="text-blue-600"><i class="fas fa-edit"></i></button></td></tr>`).join('')||'<tr><td colspan="5" class="p-6 text-center">No clients</td></tr>';
+        };
+        el('search-clients').addEventListener('input', renderClients);
+        el('form-client').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            const id = el('client-id').value;
+            const data = { name: el('client-name').value, phone: el('client-phone').value, email: el('client-email').value, address: el('client-address').value };
+            try {
+                if(id) await updateDoc(doc(db, getColPath('clients'), id), {...data, updatedAt:Date.now(), updatedBy:currentUserContext.name});
+                else await addDoc(collection(db, getColPath('clients')), {...data, createdAt:Date.now(), createdBy:currentUserContext.name});
+                closeModal('modal-client'); showToast('Client saved','success');
+            } catch(e) { showToast('Error','error'); }
+        });
+        window.editClient = (id) => { const c = state.clients.find(x=>x.id===id); if(c){ el('client-id').value=c.id; el('client-name').value=c.name; el('client-phone').value=c.phone; el('client-email').value=c.email; el('client-address').value=c.address; el('client-modal-title').textContent='Edit Client'; openModal('modal-client'); } };
+
+        const renderPlans = () => {
+            el('grid-plans').innerHTML = state.plans.map(p=>`<div class="bg-white p-5 rounded-xl shadow-sm border"><div class="flex justify-between"><span class="text-xs px-2 py-1 rounded border">${p.type}</span></div><h4 class="font-bold text-lg">${p.name}</h4><p class="text-sm text-gray-500">${p.description||''}</p><p class="font-black text-primary text-lg mt-2">${formatMoney(p.price)}</p></div>`).join('');
+        };
+        el('form-plan').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            const data = { name: el('plan-name').value, price: Number(el('plan-price').value), type: el('plan-type').value, description: el('plan-desc').value, createdAt: Date.now(), createdBy: currentUserContext.name };
+            await addDoc(collection(db, getColPath('plans')), data);
+            closeModal('modal-plan'); showToast('Plan created','success');
+        });
+
+        const populateSelects = () => {
+            const cSel = el('pay-client'); const pSel = el('pay-plan');
+            if(cSel) cSel.innerHTML = '<option value="">-- Select Client --</option>' + state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+            if(pSel) pSel.innerHTML = '<option value="">-- Select Plan --</option>' + state.plans.map(p=>`<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`).join('');
+            if(el('agr-client')) {
+                el('agr-client').innerHTML = '<option value="">-- Select Client --</option>' + state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+                el('agr-plan').innerHTML = '<option value="">-- Select Plan --</option>' + state.plans.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+            }
+        };
+
+        el('pay-type').addEventListener('change', (e)=>{
+            const wrap = el('pay-installment-wrapper');
+            if(e.target.value==='Installment') { wrap.classList.remove('hidden'); el('pay-total-amount').required=true; el('pay-months').required=true; }
+            else { wrap.classList.add('hidden'); el('pay-total-amount').required=false; el('pay-months').required=false; }
+        });
+
+        el('form-payment').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            el('pay-spinner').classList.remove('hidden'); el('btn-submit-payment').disabled=true;
+            const client = state.clients.find(c=>c.id===el('pay-client').value);
+            const plan = state.plans.find(p=>p.id===el('pay-plan').value);
+            const type = el('pay-type').value;
+            const paid = Number(el('pay-amount').value);
+            const total = type==='Installment' ? Number(el('pay-total-amount').value) : paid;
+            const months = type==='Installment' ? Number(el('pay-months').value) : 0;
+
+            let schedule = [];
+            if(type==='Installment' && months>0) {
+                const monthlyAmt = (total - paid) / months;
+                const start = new Date();
+                for(let i=0; i<months; i++) {
+                    const due = new Date(start); due.setMonth(start.getMonth()+i+1);
+                    schedule.push({ month: i+1, dueDate: due.toISOString().split('T')[0], amount: monthlyAmt, status: 'Pending', paidAmount: 0 });
+                }
+            }
+
+            const paymentData = {
+                clientId: client.id, clientName: client.name,
+                planId: plan.id, planName: plan.name,
+                type, totalAmount: total, paidAmount: paid,
+                balance: total - paid,
+                status: (total - paid <=0) ? 'Completed' : 'Active',
+                createdAt: Date.now(), createdBy: currentUserContext.name,
+                schedule, months
+            };
+
+            try {
+                const payRef = await addDoc(collection(db, getColPath('payments')), paymentData);
+                const receiptId = generateId('REC');
+                await addDoc(collection(db, getColPath('receipts')), {
+                    receiptId, paymentId: payRef.id, clientId: client.id, clientName: client.name,
+                    clientPhone: client.phone, clientEmail: client.email,
+                    planName: plan.name, amount: paid, type: type==='Installment'?'Initial Deposit':'Full Payment',
+                    totalForPlan: total, balance: total-paid, createdAt: Date.now(), createdBy: currentUserContext.name
+                });
+                showToast('Payment recorded','success');
+                sendEmailMock(client.email,'Receipt',receiptId);
+                el('form-payment').reset(); el('pay-installment-wrapper').classList.add('hidden');
+            } catch(err) { showToast('Error','error'); }
+            finally { el('pay-spinner').classList.add('hidden'); el('btn-submit-payment').disabled=false; }
+        });
+
+        const renderPayments = () => {
+            el('table-payments').innerHTML = state.payments.map(p=>{
+                const perc = p.totalAmount ? Math.min(100, Math.round((p.paidAmount/p.totalAmount)*100)) : 0;
+                const statusColor = p.status==='Completed'?'bg-emerald-100 text-emerald-800':'bg-amber-100 text-amber-800';
+                const actionBtn = p.status!=='Completed' && p.type==='Installment' ? 
+                    `<button onclick="openAddInstallment('${p.id}')" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border">Add Payment</button>
+                     <button onclick="downloadMonthlyStatement('${p.id}')" class="text-xs bg-purple-50 text-purple-600 px-2 py-1 rounded border ml-1"><i class="fas fa-download"></i></button>` :
+                    (p.status==='Completed'?'<span class="text-xs text-gray-400">Settled</span>':'');
+                return `<tr><td class="px-4 py-3 font-medium">${p.clientName}</td><td>${p.planName}</td><td>${p.type}</td><td>${formatMoney(p.paidAmount)} / ${formatMoney(p.totalAmount)}<div class="w-full bg-gray-200 h-1.5"><div class="bg-primary h-1.5" style="width:${perc}%"></div></div></td><td><span class="text-[10px] uppercase px-2 py-1 rounded ${statusColor}">${p.status}</span></td><td class="text-right">${actionBtn}</td></tr>`;
+            }).join('') || '<tr><td colspan="6" class="p-4 text-center">No payments</td></tr>';
+        };
+
+        window.openAddInstallment = (paymentId) => {
+            const p = state.payments.find(x=>x.id===paymentId);
+            if(!p || !p.schedule) return;
+            el('inst-payment-id').value = p.id;
+            el('inst-summary').innerHTML = `<strong>${p.clientName}</strong> - ${p.planName}<br>Balance: ${formatMoney(p.balance)}`;
+            const sel = el('inst-month-select');
+            sel.innerHTML = p.schedule.filter(s=>s.status==='Pending').map((s,i)=>`<option value="${i}">Month ${s.month} (Due ${s.dueDate}) - ₦${s.amount.toFixed(2)}</option>`).join('');
+            openModal('modal-add-installment');
+        };
+
+        el('form-add-installment').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            el('inst-spinner').classList.remove('hidden');
+            const pid = el('inst-payment-id').value;
+            const p = state.payments.find(x=>x.id===pid);
+            const idx = Number(el('inst-month-select').value);
+            const amt = Number(el('inst-amount').value);
+            if(amt > p.balance) { showToast('Amount exceeds balance','error'); el('inst-spinner').classList.add('hidden'); return; }
+            const schedule = [...p.schedule];
+            const month = schedule[idx];
+            month.paidAmount = amt; month.status = 'Paid'; month.paidDate = new Date().toISOString();
+            const newPaid = p.paidAmount + amt;
+            const newBalance = p.totalAmount - newPaid;
+            const newStatus = newBalance <=0 ? 'Completed' : 'Active';
+            const receiptId = generateId('REC');
+            try {
+                await addDoc(collection(db, getColPath('receipts')), {
+                    receiptId, paymentId: pid, clientId: p.clientId, clientName: p.clientName,
+                    clientPhone: state.clients.find(c=>c.id===p.clientId)?.phone||'', clientEmail: state.clients.find(c=>c.id===p.clientId)?.email||'',
+                    planName: p.planName, amount: amt, type: 'Monthly Installment',
+                    totalForPlan: p.totalAmount, balance: newBalance, createdAt: Date.now(), createdBy: currentUserContext.name
+                });
+                await updateDoc(doc(db, getColPath('payments'), pid), {
+                    paidAmount: newPaid, balance: newBalance, status: newStatus,
+                    schedule, updatedAt: Date.now()
+                });
+                showToast('Installment recorded','success');
+                closeModal('modal-add-installment');
+            } catch(err) { showToast('Error','error'); }
+            finally { el('inst-spinner').classList.add('hidden'); }
+        });
+
+        window.downloadMonthlyStatement = async (paymentId) => {
+            const p = state.payments.find(x=>x.id===paymentId);
+            if(!p) return;
+            el('ms-client').textContent = p.clientName;
+            el('ms-plan').textContent = p.planName;
+            el('ms-total').textContent = formatMoney(p.totalAmount);
+            el('ms-months').textContent = p.months || (p.schedule?p.schedule.length:'-');
+            el('ms-date').textContent = new Date().toLocaleString();
+            const tbody = el('ms-table-body');
+            tbody.innerHTML = '';
+            if(p.schedule) {
+                p.schedule.forEach(s=>{
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="border p-1">${s.month}</td><td class="border p-1">${s.dueDate}</td><td class="border p-1">${formatMoney(s.amount)}</td><td class="border p-1">${s.paidAmount?formatMoney(s.paidAmount):'-'}</td><td class="border p-1">${s.status}</td><td class="border p-1">${s.receiptId||''}</td>`;
+                    tbody.appendChild(row);
+                });
+            }
+            el('ms-qrcode').innerHTML = '';
+            new QRCode(el('ms-qrcode'), { text: `CSL-INST-${p.id}-${Date.now()}`, width:64, height:64 });
+            const opt = { margin:0, filename:`Installment_Statement_${p.clientName}.pdf`, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4'} };
+            await html2pdf().set(opt).from(el('print-monthly-statement-template')).save();
+        };
+
+        const renderReceipts = () => {
+            el('table-receipts').innerHTML = state.receipts.map(r=>`<tr><td class="px-6 py-4 font-bold">${r.receiptId}</td><td>${new Date(r.createdAt).toLocaleString()}</td><td>${r.clientName}</td><td class="font-bold text-emerald-600">${formatMoney(r.amount)}</td><td>${r.createdBy}</td><td><button onclick="generateReceiptPDF('${r.id}')" class="bg-primary text-white p-2 rounded"><i class="fas fa-print"></i></button></td></tr>`).join('')||'<tr><td colspan="6" class="p-6 text-center">No receipts</td></tr>';
+        };
+        window.generateReceiptPDF = async (id) => {
+            const r = state.receipts.find(x=>x.id===id); if(!r) return;
+            el('pr-id').textContent=r.receiptId; el('pr-date').textContent=new Date(r.createdAt).toLocaleDateString();
+            el('pr-client-name').textContent=r.clientName; el('pr-client-contact').textContent=r.clientPhone||'';
+            el('pr-desc').textContent=r.planName; el('pr-type').textContent=r.type;
+            el('pr-amount').textContent=formatMoney(r.amount); el('pr-total').textContent=formatMoney(r.amount);
+            if(r.balance>0){ el('pr-balance-row').classList.remove('hidden'); el('pr-balance').textContent=formatMoney(r.balance); }
+            else el('pr-balance-row').classList.add('hidden');
+            el('pr-generated-by').textContent = `Generated by: ${r.createdBy}`;
+            el('pr-qrcode').innerHTML=''; new QRCode(el('pr-qrcode'),{text:`CSL:${r.receiptId}`,width:64,height:64});
+            await html2pdf().set({filename:`Receipt_${r.receiptId}.pdf`}).from(el('print-receipt-template')).save();
+        };
+
+        const renderFinance = () => {
+            const filter = el('filter-finance-type').value;
+            let list = state.receipts;
+            if(filter==='Full') list = list.filter(r=>r.type==='Full Payment');
+            if(filter==='Installment') list = list.filter(r=>r.type.includes('Installment'));
+            let total=0;
+            el('table-finance').innerHTML = list.map(r=>{ total+=Number(r.amount); return `<tr><td>${new Date(r.createdAt).toLocaleDateString()}</td><td>${r.receiptId}</td><td>${r.clientName}</td><td>${r.planName} (${r.type})</td><td>${formatMoney(r.amount)}</td></tr>`; }).join('');
+            el('finance-total').textContent = formatMoney(total);
+        };
+        el('filter-finance-type').addEventListener('change', renderFinance);
+
+        window.generateFullStatement = async () => {
+            const sorted = [...state.receipts].sort((a,b)=>a.createdAt-b.createdAt);
+            let total=0;
+            el('ps-table-body').innerHTML = sorted.map(r=>{ total+=Number(r.amount); return `<tr><td class="p-2">${new Date(r.createdAt).toLocaleDateString()}</td><td>${r.receiptId}</td><td>${r.clientName}</td><td>${r.planName}</td><td class="text-right">${formatMoney(r.amount)}</td></tr>`; }).join('');
+            el('ps-date').textContent = new Date().toLocaleString();
+            el('ps-total-revenue').textContent = formatMoney(total);
+            el('ps-total-trx').textContent = sorted.length;
+            el('ps-generated-by').textContent = `By: ${currentUserContext.name}`;
+            el('ps-qrcode').innerHTML=''; new QRCode(el('ps-qrcode'),{text:`CSL-STATEMENT-${Date.now()}`,width:64,height:64});
+            await html2pdf().set({filename:'CSL_Statement.pdf'}).from(el('print-statement-template')).save();
+        };
+
+        // AGREEMENT GENERATOR WITH UPDATED EXACT TEXT
+        window.openAgreementModal = () => { populateSelects(); openModal('modal-agreement'); };
+        el('form-agreement').addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            const client = state.clients.find(c=>c.id===el('agr-client').value);
+            const plan = state.plans.find(p=>p.id===el('agr-plan').value);
+            const type = el('agr-type').value;
+            const today = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
+            const content = type==='full' ? getFullAgreementHTML(client,plan,today) : getInstallmentAgreementHTML(client,plan,today);
+            const div = document.createElement('div'); 
+            div.className='a4-page agreement-text'; 
+            div.style.padding='15mm'; div.style.width='210mm'; div.style.minHeight='297mm';
+            div.style.background='white';
+            div.innerHTML = content;
+            const qrDiv = document.createElement('div'); qrDiv.style.marginTop='20px'; div.appendChild(qrDiv);
+            document.body.appendChild(div);
+            new QRCode(qrDiv, {text:`CSL-AGREEMENT-${client.id}-${plan.id}`, width:80, height:80});
+            await html2pdf().set({filename:`Agreement_${client.name}.pdf`}).from(div).save();
+            div.remove(); closeModal('modal-agreement');
+        });
+
+        function getFullAgreementHTML(client,plan,date) {
+            return `
+                <div style="font-family:'Poppins',sans-serif; color:#1e293b;">
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" style="width:80px; border-radius:50%; border:3px solid #c9a227;">
+                        <h1 style="font-family:'Playfair Display'; color:#0a2540; margin:10px 0 0; font-size:24px;">CLUSTER SYNERGY LIMITED</h1>
+                        <p style="font-size:11px; color:#64748b; margin:5px 0;">Suite 24 AB Plaza Tal'udu | +2348107907647 | www.clustersynergy.com | support@clustersynergy.com</p>
+                    </div>
+                    <h2 style="text-align:center; font-family:'Playfair Display'; color:#0a2540; border-bottom:2px solid #c9a227; padding-bottom:8px; font-size:18px;">LAND / PROPERTY PURCHASE AGREEMENT (FULL PAYMENT)</h2>
+                    <p style="margin:15px 0 5px;"><em>This Agreement is made on this ___ day of _______, 20___</em></p>
+                    <p><strong>BETWEEN</strong><br><strong>Cluster Synergy Limited</strong>, hereinafter referred to as <em>“the Company”</em></p>
+                    <p>AND</p>
+                    <p><strong>Client Name:</strong> ${client.name}<br><strong>Address:</strong> ${client.address}<br><strong>Phone:</strong> ${client.phone}<br><strong>Email:</strong> ${client.email}</p>
+                    <p>Hereinafter referred to as <em>“the Buyer”</em></p>
+                    <h3 style="color:#0a2540; margin-top:20px;">1. PROPERTY DETAILS</h3>
+                    <p>Property Type: ${plan.type}<br>Location/Description: ${plan.description || plan.name}<br>Plot/Unit Number: _______________</p>
+                    <h3 style="color:#0a2540;">2. PURCHASE PRICE</h3>
+                    <p>The Buyer agrees to purchase the above property for the total sum of:<br><strong>${formatMoney(plan.price)} (${numberToWords(plan.price)})</strong></p>
+                    <h3 style="color:#0a2540;">3. PAYMENT TERMS</h3>
+                    <p>The Buyer has paid the full amount of ${formatMoney(plan.price)}<br>Payment date: ${date}<br>Payment method: _______________________</p>
+                    <h3 style="color:#0a2540;">4. OWNERSHIP TRANSFER</h3>
+                    <p>Upon confirmation of full payment, the Company shall transfer ownership rights and issue all relevant documents.</p>
+                    <h3 style="color:#0a2540;">5. OBLIGATIONS OF THE COMPANY</h3>
+                    <p>Ensure property is free from disputes; Provide valid documentation.</p>
+                    <h3 style="color:#0a2540;">6. OBLIGATIONS OF THE BUYER</h3>
+                    <p>Provide correct personal information; Comply with all legal requirements.</p>
+                    <h3 style="color:#0a2540;">7. DEFAULT</h3>
+                    <p>Failure to comply with terms may result in legal action.</p>
+                    <h3 style="color:#0a2540;">8. GOVERNING LAW</h3>
+                    <p>This Agreement shall be governed by the laws of the Federal Republic of Nigeria.</p>
+                    <h3 style="color:#0a2540;">9. DECLARATION</h3>
+                    <p>Both parties agree to the terms stated above.</p>
+                    <h3 style="color:#0a2540; margin-top:20px;">SIGNATURES</h3>
+                    <p><strong>For Cluster Synergy Limited</strong><br>Name: __________________________<br>Signature: ______________________<br>Date: __________________________</p>
+                    <p><strong>Buyer</strong><br>Name: __________________________<br>Signature: ______________________<br>Date: __________________________</p>
+                    <p style="font-size:9px; color:#ef4444; margin-top:20px; text-align:center;">📌 This document is valid only if it carries the official company stamp and authorized signature.</p>
+                </div>
+            `;
+        }
+        function getInstallmentAgreementHTML(client,plan,date) {
+            return `
+                <div style="font-family:'Poppins',sans-serif; color:#1e293b;">
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s100-c" style="width:80px; border-radius:50%; border:3px solid #c9a227;">
+                        <h1 style="font-family:'Playfair Display'; color:#0a2540; margin:10px 0 0; font-size:24px;">CLUSTER SYNERGY LIMITED</h1>
+                        <p style="font-size:11px; color:#64748b;">Suite 24 AB Plaza Tal'udu | +2348107907647 | www.clustersynergy.com | support@clustersynergy.com</p>
+                    </div>
+                    <h2 style="text-align:center; font-family:'Playfair Display'; color:#0a2540; border-bottom:2px solid #c9a227; padding-bottom:8px; font-size:18px;">LAND / PROPERTY PURCHASE AGREEMENT (INSTALLMENT PAYMENT)</h2>
+                    <p><em>This Agreement is made on this ___ day of _______, 20___</em></p>
+                    <p><strong>BETWEEN</strong><br><strong>Cluster Synergy Limited</strong>, hereinafter referred to as <em>“the Company”</em></p>
+                    <p>AND</p>
+                    <p><strong>Client Name:</strong> ${client.name}<br><strong>Address:</strong> ${client.address}<br><strong>Phone:</strong> ${client.phone}<br><strong>Email:</strong> ${client.email}</p>
+                    <p>Hereinafter referred to as <em>“the Buyer”</em></p>
+                    <h3 style="color:#0a2540;">1. PROPERTY DETAILS</h3>
+                    <p>Property Type: ${plan.type}<br>Location/Description: ${plan.description || plan.name}<br>Plot/Unit Number: _______________</p>
+                    <h3 style="color:#0a2540;">2. TOTAL PURCHASE PRICE</h3>
+                    <p>The total cost of the property is:<br><strong>${formatMoney(plan.price)} (${numberToWords(plan.price)})</strong></p>
+                    <h3 style="color:#0a2540;">3. PAYMENT PLAN</h3>
+                    <p>The Buyer agrees to pay in installments as follows:<br>Initial Deposit: ₦ ______________<br>Balance: ₦ ______________<br>Duration: __________ months</p>
+                    <h3 style="color:#0a2540;">4. PAYMENT SCHEDULE</h3>
+                    <table style="width:100%; border-collapse:collapse; font-size:10px;" border="1">
+                        <tr><th>Payment No</th><th>Amount (₦)</th><th>Due Date</th><th>Status</th></tr>
+                        <tr><td>1</td><td></td><td></td><td></td></tr>
+                        <tr><td>2</td><td></td><td></td><td></td></tr>
+                        <tr><td>3</td><td></td><td></td><td></td></tr>
+                    </table>
+                    <h3 style="color:#0a2540;">5. DEFAULT / LATE PAYMENT</h3>
+                    <p>Late payments may attract penalties. Failure to complete payment may lead to cancellation of agreement or refund policy (if applicable).</p>
+                    <h3 style="color:#0a2540;">6. OWNERSHIP CONDITION</h3>
+                    <p>Ownership shall only be transferred after full payment is completed.</p>
+                    <h3 style="color:#0a2540;">7. COMPANY OBLIGATIONS</h3>
+                    <p>Provide genuine property; Maintain transaction records.</p>
+                    <h3 style="color:#0a2540;">8. BUYER OBLIGATIONS</h3>
+                    <p>Pay installments as agreed; Keep payment records.</p>
+                    <h3 style="color:#0a2540;">9. TERMINATION</h3>
+                    <p>The Company reserves the right to terminate this agreement if the Buyer defaults.</p>
+                    <h3 style="color:#0a2540;">10. GOVERNING LAW</h3>
+                    <p>This Agreement is governed by the laws of the Federal Republic of Nigeria.</p>
+                    <h3 style="color:#0a2540;">11. DECLARATION</h3>
+                    <p>Both parties agree to all terms.</p>
+                    <h3 style="color:#0a2540; margin-top:20px;">SIGNATURES</h3>
+                    <p><strong>For Cluster Synergy Limited</strong><br>Name: __________________________<br>Signature: ______________________<br>Date: __________________________</p>
+                    <p><strong>Buyer</strong><br>Name: __________________________<br>Signature: ______________________<br>Date: __________________________</p>
+                    <p style="font-size:9px; color:#ef4444; margin-top:20px; text-align:center;">📌 This document is valid only if it carries the official company stamp and authorized signature.</p>
+                </div>
+            `;
+        }
+
+        // Helper to convert number to words (simplified)
+        function numberToWords(n) {
+            if (n === 0) return 'Zero Naira';
+            // A simple placeholder - in production use a proper library
+            return '__________________________________';
+        }
+
+        window.openModal = (id) => { el(id).classList.remove('hidden-view'); };
+        window.closeModal = (id) => { el(id).classList.add('hidden-view'); };
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
