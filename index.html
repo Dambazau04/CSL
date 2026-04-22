@@ -52,14 +52,12 @@
         .modal-open { overflow: hidden; }
         .glass-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
         
-        /* PDF FIX: Safe off-screen rendering strategy */
+        /* PDF off‑screen rendering */
         #print-templates { 
             display: none;
-            width: 794px; /* Force A4 width constraint for the canvas */
+            width: 794px;
             background: white;
         }
-
-        /* A4 Template Styles */
         .a4-page {
             width: 794px;
             min-height: 1123px;
@@ -68,9 +66,13 @@
             font-family: 'Inter', sans-serif;
             color: #1e293b;
             position: relative;
+            page-break-after: avoid;
+            page-break-inside: avoid;
         }
-        
-        /* CSS Generated Company Stamp */
+        /* Agreement one‑page compact */
+        .a4-page.compact {
+            padding: 30px 35px !important;
+        }
         .official-stamp {
             position: relative;
             width: 130px;
@@ -605,108 +607,54 @@
     =========================================== -->
     <div id="print-templates">
         
-        <!-- 0. CLIENT AGREEMENT TEMPLATE -->
-        <div id="pdf-client-agreement" class="a4-page p-12">
-            <!-- Header -->
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 15px; margin-bottom: 20px;">
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 70px; height: 70px; border-radius: 50%;" crossorigin="anonymous">
+        <!-- CLIENT AGREEMENT (compact one‑page) -->
+        <div id="pdf-client-agreement" class="a4-page compact p-8">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 12px; margin-bottom: 16px;">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <img src="https://lh3.googleusercontent.com/a/ACg8ocKhaUmmww6mK6nZPvj8mssdc1nCRu_4Kbi8T7vxVmc2okqqFs0=s288-c-no" style="width: 60px; height: 60px; border-radius: 50%;" crossorigin="anonymous">
                     <div>
-                        <h1 style="color: #0c4a6e; font-size: 24px; font-weight: bold; margin: 0;">Cluster Synergy Limited</h1>
-                        <p style="color: #64748b; font-size: 11px; margin: 2px 0 0 0;">Suite 24 AB Plaza Tal'udu<br>+2348107907647 | www.clustersynergy.com<br>support@clustersynergy.com</p>
+                        <h1 style="color: #0c4a6e; font-size: 22px; font-weight: bold; margin: 0;">Cluster Synergy Limited</h1>
+                        <p style="color: #64748b; font-size: 10px; margin: 2px 0 0;">Suite 24 AB Plaza Tal'udu · +2348107907647 · support@clustersynergy.com</p>
                     </div>
                 </div>
-                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
-                    <h2 style="color: #0ea5e9; font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">CUSTOM CLEARING<br>AGENCY AGREEMENT</h2>
+                <div style="text-align: right;">
+                    <h2 style="color: #0ea5e9; font-size: 18px; font-weight: bold; margin: 0; text-transform: uppercase;">CLEARING AGREEMENT</h2>
                 </div>
             </div>
-
-            <div style="margin-bottom: 15px; font-size: 13px;">
-                <p><strong>This Agreement made on <span id="agr-date"></span></strong></p>
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px;">
-                    <p style="margin: 0 0 5px 0;"><strong>BETWEEN:</strong> Cluster Synergy Limited ("Clearing Agent")</p>
-                    <p style="margin: 0 0 5px 0;"><strong>AND:</strong> <span id="agr-client-name" style="font-weight:bold;"></span> ("Client")</p>
-                    <p style="margin: 0;"><strong>Client Details:</strong> Address: <span id="agr-client-address"></span> | Phone: <span id="agr-client-phone"></span> | Email: <span id="agr-client-email"></span></p>
+            <div style="margin-bottom: 12px; font-size: 12px;">
+                <p><strong>Agreement Date: <span id="agr-date"></span></strong></p>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border:1px solid #e2e8f0; margin-top:8px;">
+                    <p style="margin:0 0 3px;"><strong>BETWEEN:</strong> Cluster Synergy Limited</p>
+                    <p style="margin:0 0 3px;"><strong>AND:</strong> <span id="agr-client-name"></span></p>
+                    <p style="margin:0;">Address: <span id="agr-client-address"></span> · Phone: <span id="agr-client-phone"></span> · Email: <span id="agr-client-email"></span></p>
                 </div>
             </div>
-
-            <!-- Sections in 2 Columns -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 12px; color: #334155;">
-                <!-- Column 1 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 11px; color: #334155;">
                 <div>
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">1. APPOINTMENT</h3>
-                    <p style="margin: 0 0 10px 0;">Client appoints Agent to handle clearing and forwarding of goods on their behalf.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">2. SHIPMENT DETAILS (per shipment)</h3>
-                    <p style="margin: 0 0 10px 0; line-height: 1.6;">Description: _______________________<br>Container: _______________________<br>BL: _______________________<br>Port: _______________________<br>ETA: _______________________</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">3. SCOPE OF SERVICES</h3>
-                    <p style="margin: 0 0 10px 0;">Process customs documentation, duty assessment/payments, clearance, delivery arrangement.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">4. SERVICE CHARGES</h3>
-                    <p style="margin: 0 0 10px 0; line-height: 1.6;">Duty Fees: ₦ _______<br>Service: ₦ _______<br>Transport: ₦ _______<br>Other: ₦ _______<br><strong>Total: ₦ _______</strong></p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">5. PAYMENT TERMS</h3>
-                    <p style="margin: 0 0 10px 0;">Payments may be in full or installments; all payments due before final release unless otherwise agreed.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">1. APPOINTMENT</h3><p style="margin:0 0 8px;">Client appoints Agent for clearing & forwarding.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">2. SCOPE OF SERVICES</h3><p style="margin:0 0 8px;">Customs documentation, duty assessment, clearance, delivery.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">3. SERVICE CHARGES</h3><p style="margin:0 0 8px;">Duty, Service, Transport fees as per shipment.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">4. PAYMENT TERMS</h3><p style="margin:0;">Payments due before release unless agreed.</p>
                 </div>
-                <!-- Column 2 -->
                 <div>
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">6. CLIENT RESPONSIBILITIES</h3>
-                    <p style="margin: 0 0 10px 0;">Provide accurate docs, pay charges timely, comply with regulations.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">7. AGENT RESPONSIBILITIES</h3>
-                    <p style="margin: 0 0 10px 0;">Act professionally, keep client informed, proper handling.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">8. DELAYS & LIABILITY</h3>
-                    <p style="margin: 0 0 10px 0;">Agent not liable for delays by customs, port congestion, incomplete docs.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">9. DEFAULT</h3>
-                    <p style="margin: 0 0 10px 0;">Failure to pay may result in clearance delay, document withholding, legal action.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">10. TERMINATION</h3>
-                    <p style="margin: 0 0 10px 0;">Either party may terminate with written notice subject to settlement.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">11. GOVERNING LAW</h3>
-                    <p style="margin: 0 0 10px 0;">Federal Republic of Nigeria.</p>
-
-                    <h3 style="color: #0f172a; font-size: 13px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 5px;">12. DECLARATION</h3>
-                    <p style="margin: 0 0 10px 0;">Both parties agree to the terms and conditions stated herein.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">5. CLIENT RESPONSIBILITIES</h3><p style="margin:0 0 8px;">Provide accurate docs, timely payment.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">6. LIABILITY</h3><p style="margin:0 0 8px;">Agent not liable for customs/port delays.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">7. DEFAULT</h3><p style="margin:0 0 8px;">Non-payment may result in withholding.</p>
+                    <h3 style="font-size:12px; border-bottom:1px solid #cbd5e1; padding-bottom:2px; margin:6px 0 4px;">8. GOVERNING LAW</h3><p style="margin:0;">Federal Republic of Nigeria.</p>
                 </div>
             </div>
-
-            <!-- Signatures & Stamp -->
-            <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px;">
-                <div style="width: 220px;">
-                    <p style="margin:0 0 25px 0;"><strong>For Cluster Synergy Limited</strong></p>
-                    <div style="border-bottom: 1px solid #000; height: 10px; margin-bottom: 5px;"></div>
-                    <p style="margin:0;">Name: <span id="agr-gen-by"></span></p>
-                    <p style="margin:5px 0 0 0;">Signature & Date:</p>
-                </div>
-                
-                <div class="official-stamp" style="transform: rotate(-5deg); margin: 0 20px;">
-                    <div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color: #ef4444; font-size: 9px;">★ OFFICIAL ★</span><br>STAMP</div>
-                </div>
-
-                <div style="width: 220px;">
-                    <p style="margin:0 0 25px 0;"><strong>Client</strong></p>
-                    <div style="border-bottom: 1px solid #000; height: 10px; margin-bottom: 5px;"></div>
-                    <p style="margin:0;">Name: <span id="agr-client-sign-name"></span></p>
-                    <p style="margin:5px 0 0 0;">Signature & Date:</p>
-                </div>
+            <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px;">
+                <div style="width:200px;"><p><strong>For Cluster Synergy</strong></p><div style="border-bottom:1px solid #000; height:8px; margin:5px 0;"></div><p>Name: <span id="agr-gen-by"></span></p></div>
+                <div class="official-stamp" style="transform:rotate(-5deg); margin:0 10px;"><div class="official-stamp-text">CLUSTER SYNERGY<br>LIMITED<br><span style="color:#ef4444;">★ OFFICIAL ★</span><br>STAMP</div></div>
+                <div style="width:200px;"><p><strong>Client</strong></p><div style="border-bottom:1px solid #000; height:8px; margin:5px 0;"></div><p>Name: <span id="agr-client-sign-name"></span></p></div>
             </div>
-
-            <!-- Footer & QR -->
-            <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; border-top:1px solid #e2e8f0; padding-top:10px;">
                 <div id="agr-qr-container"></div>
-                <div style="text-align: right; color: #64748b; font-size: 11px;">
-                    <p style="margin: 0; font-weight: bold;">Generated by: <span id="agr-footer-gen"></span></p>
-                    <p style="margin: 4px 0 0 0;">Valid with stamp & signature.</p>
-                </div>
+                <div style="text-align:right; font-size:10px;">Generated by: <span id="agr-footer-gen"></span></div>
             </div>
         </div>
 
-        
-        <!-- 1. Receipt Template -->
+        <!-- Receipt Template -->
         <div id="pdf-receipt" class="a4-page p-12">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -760,7 +708,6 @@
                 </div>
             </div>
 
-            <!-- Footer area with Stamp, QR and Sigs -->
             <div style="margin-top: 80px; display: flex; justify-content: space-between; align-items: flex-end;">
                 <div id="rct-qr-container"></div>
                 <div class="official-stamp" style="margin-right: 50px;">
@@ -778,8 +725,7 @@
             </div>
         </div>
 
-
-        <!-- 2. Full Shipment Statement Template -->
+        <!-- Full Shipment Statement Template -->
         <div id="pdf-statement" class="a4-page p-12">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -857,7 +803,7 @@
             </div>
         </div>
 
-        <!-- 3. Global Finance Statement Template -->
+        <!-- Global Finance Statement Template -->
         <div id="pdf-global-statement" class="a4-page p-12">
             <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 30px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -920,8 +866,8 @@
     <script type="module">
         // Firebase Modular SDK Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, addDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Config
         const firebaseConfig = {
@@ -934,10 +880,10 @@
             measurementId: "G-NDFR9HBXB0"
         };
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'csc-ms-default';
+        const appId = 'csc-ms-default';
         
         // EmailJS initialization
-        (function() { emailjs.init("AVb65VdPdNM2xhm6k"); })();
+        emailjs.init("AVb65VdPdNM2xhm6k");
 
         let app, auth, db;
         let currentUser = null;
@@ -964,17 +910,44 @@
             return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${colors[status] || 'bg-gray-100'}">${status}</span>`;
         };
 
-        // Initialize Firebase & Auth
+        // ========== Email Helpers ==========
+        function sendClientWelcomeEmail(client) {
+            if (!client.email) return;
+            const templateParams = {
+                name: client.name,
+                company: client.company || 'N/A',
+                tin: client.tin || 'N/A',
+                address: client.address || 'N/A',
+                to_email: client.email
+            };
+            emailjs.send('service_4nczyrc', 'template_g7y4om9', templateParams)
+                .then(() => console.log('✅ Client welcome email sent'))
+                .catch(err => console.warn('⚠️ Client email error:', err));
+        }
+
+        function sendPaymentNotificationEmail(payment, shipment, client) {
+            if (!client?.email) return;
+            const templateParams = {
+                name: client.name,
+                company: client.company || 'N/A',
+                amount: formatMoney(payment.amount),
+                total_amount: formatMoney(shipment?.totalAmount || 0),
+                date: formatDate(payment.date),
+                staff_name: appUser.name,
+                to_email: client.email
+            };
+            emailjs.send('service_4nczyrc', 'template_jr7fa5k', templateParams)
+                .then(() => console.log('✅ Payment notification sent'))
+                .catch(err => console.warn('⚠️ Payment email error:', err));
+        }
+
+        // ========== Firebase Init ==========
         const initSystem = async () => {
             try {
-                if (!app) {
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-                }
-                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (token) await signInWithCustomToken(auth, token);
-                else signInAnonymously(auth).catch(() => { currentUser = { uid: 'csl-global-admin' }; });
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => { if (user) currentUser = user; });
             } catch (err) {
                 console.error("Firebase Init Error:", err);
@@ -982,19 +955,7 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initSystem();
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('login-form').addEventListener('submit', handleLogin);
-            document.getElementById('client-form').addEventListener('submit', saveClient);
-            document.getElementById('shipment-form').addEventListener('submit', saveShipment);
-            document.getElementById('payment-form').addEventListener('submit', savePayment);
-            document.getElementById('pay-date').valueAsDate = new Date();
-        });
-
-        // ==========================================
-        // UI NAVIGATION & MODALS
-        // ==========================================
+        // ========== UI Navigation & Modals ==========
         window.nav = (viewId) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-slate-800', 'text-white'));
@@ -1015,9 +976,7 @@
             if(modalId === 'payment-modal') document.getElementById('payment-form').reset();
         };
 
-        // ==========================================
-        // AUTHENTICATION LOGIC
-        // ==========================================
+        // ========== Authentication ==========
         const handleLogin = (e) => {
             e.preventDefault();
             const email = document.getElementById('user-email').value.trim();
@@ -1029,7 +988,7 @@
             document.getElementById('login-form').classList.add('hidden');
             document.getElementById('auth-spinner').classList.remove('hidden');
             setTimeout(() => {
-                currentUser = currentUser || auth.currentUser || { uid: 'csl-system-admin' };
+                if (!currentUser) currentUser = { uid: 'csl-system-admin' };
                 document.getElementById('sidebar-user-name').innerText = appUser.name;
                 document.getElementById('sidebar-user-role').innerText = appUser.role;
                 document.getElementById('sidebar-user-initials').innerText = appUser.initials;
@@ -1039,6 +998,7 @@
                 nav('dashboard');
             }, 1000);
         };
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
 
         window.logout = () => {
             Swal.fire({ title: 'Logout?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Yes, Logout' }).then((result) => {
@@ -1054,24 +1014,20 @@
             });
         };
 
-        // ==========================================
-        // FIREBASE DATA SYNC
-        // ==========================================
+        // ========== Data Sync ==========
         const startDataSync = () => {
             if (!currentUser) return;
             const uid = currentUser.uid;
             const clientsRef = collection(db, 'artifacts', appId, 'users', uid, 'clients');
-            const unsubClients = onSnapshot(clientsRef, (snapshot) => { dbClients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderClients(); populateClientDropdown(); }, err => console.error);
+            const unsubClients = onSnapshot(clientsRef, (snapshot) => { dbClients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderClients(); populateClientDropdown(); });
             const shipmentsRef = collection(db, 'artifacts', appId, 'users', uid, 'shipments');
             const unsubShipments = onSnapshot(shipmentsRef, (snapshot) => { dbShipments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.createdAt - a.createdAt); renderShipments(); updateDashboardStats(); if (currentActiveShipmentId) renderShipmentDetails(currentActiveShipmentId); });
             const paymentsRef = collection(db, 'artifacts', appId, 'users', uid, 'payments');
             const unsubPayments = onSnapshot(paymentsRef, (snapshot) => { dbPayments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => new Date(b.date) - new Date(a.date)); renderGlobalFinance(); if (currentActiveShipmentId) renderShipmentPayments(currentActiveShipmentId); });
-            activeListeners.push(unsubClients, unsubShipments, unsubPayments);
+            activeListeners = [unsubClients, unsubShipments, unsubPayments];
         };
 
-        // ==========================================
-        // DASHBOARD
-        // ==========================================
+        // ========== Dashboard ==========
         const updateDashboardStats = () => {
             const total = dbShipments.length;
             const pending = dbShipments.filter(s => s.status === 'Pending' || s.status === 'Documentation').length;
@@ -1090,17 +1046,15 @@
             document.getElementById('dashboard-recent-table').innerHTML = recent.map(s => {
                 const client = dbClients.find(c => c.id === s.clientId);
                 return `<tr class="hover:bg-slate-50 cursor-pointer" onclick="viewShipment('${s.id}')"><td class="p-4 font-medium text-brand-600">${s.jobId}</td><td class="p-4">${client?.name || 'Unknown'}</td><td class="p-4">${getStatusBadge(s.status)}</td><td class="p-4 text-right">${formatDate(s.arrivalDate)}</td></tr>`;
-            }).join('') || `<tr><td colspan="4" class="p-4 text-center text-slate-500">No shipments found.</td></tr>`;
+            }).join('') || `<tr><td colspan="4" class="p-4 text-center">No shipments.</td></tr>`;
         };
 
-        // ==========================================
-        // CLIENTS
-        // ==========================================
+        // ========== Clients ==========
         const renderClients = (filterText = '') => {
             const lower = filterText.toLowerCase();
             const filtered = dbClients.filter(c => c.name.toLowerCase().includes(lower) || (c.company||'').toLowerCase().includes(lower) || (c.tin||'').toLowerCase().includes(lower));
             document.getElementById('clients-table').innerHTML = filtered.map(c => `
-                <tr class="hover:bg-slate-50"><td class="p-4"><p class="font-bold">${c.name}</p><p class="text-xs text-slate-500">${c.company||'-'}</p></td><td class="p-4"><p>${c.phone}</p><p class="text-xs">${c.email||'-'}</p></td><td class="p-4"><p class="truncate w-48">${c.address||'-'}</p><p class="text-xs font-mono">TIN: ${c.tin||'-'}</p></td><td class="p-4 text-xs text-brand-600">${c.createdBy||'-'}</td>
+                <tr><td class="p-4"><p class="font-bold">${c.name}</p><p class="text-xs text-slate-500">${c.company||'-'}</p></td><td class="p-4"><p>${c.phone}</p><p class="text-xs">${c.email||'-'}</p></td><td class="p-4"><p class="truncate w-48">${c.address||'-'}</p><p class="text-xs font-mono">TIN: ${c.tin||'-'}</p></td><td class="p-4 text-xs text-brand-600">${c.createdBy||'-'}</td>
                 <td class="p-4 text-right"><button onclick="generateClientAgreement('${c.id}')" class="text-brand-600 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-file-contract"></i> Contract</button>
                 <button onclick="editClient('${c.id}')" class="text-slate-500 hover:text-brand-600 p-2"><i class="fa-solid fa-pen"></i></button>
                 <button onclick="deleteClient('${c.id}')" class="text-red-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button></td></tr>
@@ -1108,16 +1062,24 @@
         };
         window.filterClients = () => renderClients(document.getElementById('search-clients').value);
 
-        const sendClientEmail = (client) => {
-            if (!client.email) return;
-            const templateParams = {
-                name: client.name,
-                company: client.company || 'N/A',
-                tin: client.tin || 'N/A',
-                address: client.address || 'N/A',
-                to_email: client.email
-            };
-            emailjs.send('service_4nczyrc', 'template_g7y4om9', templateParams).catch(e => console.warn('Client email failed:', e));
+        window.editClient = (id) => {
+            const c = dbClients.find(x => x.id === id); if(!c) return;
+            document.getElementById('client-id').value = c.id;
+            document.getElementById('client-name').value = c.name;
+            document.getElementById('client-company').value = c.company || '';
+            document.getElementById('client-phone').value = c.phone;
+            document.getElementById('client-email').value = c.email || '';
+            document.getElementById('client-tin').value = c.tin || '';
+            document.getElementById('client-address').value = c.address || '';
+            document.getElementById('client-modal-title').innerText = 'Edit Client';
+            openModal('client-modal');
+        };
+
+        window.deleteClient = (id) => {
+            if(dbShipments.some(s => s.clientId === id)) return Swal.fire('Blocked', 'Client has shipments.', 'warning');
+            Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then(async (r) => {
+                if(r.isConfirmed) { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id)); Swal.fire('Deleted!', '', 'success'); }
+            });
         };
 
         const saveClient = async (e) => {
@@ -1140,38 +1102,16 @@
                 else {
                     clientData.createdAt = Date.now();
                     clientData.createdBy = appUser.name;
-                    const docRef = await addDoc(clientsRef, clientData);
-                    clientData.id = docRef.id;
+                    await addDoc(clientsRef, clientData);
                 }
-                sendClientEmail(clientData);
+                sendClientWelcomeEmail(clientData);
                 Swal.fire('Success', 'Client saved.', 'success');
                 closeModal('client-modal');
             } catch (error) { Swal.fire('Error', 'Failed to save.', 'error'); }
         };
+        document.getElementById('client-form').addEventListener('submit', saveClient);
 
-        window.editClient = (id) => {
-            const c = dbClients.find(x => x.id === id); if(!c) return;
-            document.getElementById('client-id').value = c.id;
-            document.getElementById('client-name').value = c.name;
-            document.getElementById('client-company').value = c.company || '';
-            document.getElementById('client-phone').value = c.phone;
-            document.getElementById('client-email').value = c.email || '';
-            document.getElementById('client-tin').value = c.tin || '';
-            document.getElementById('client-address').value = c.address || '';
-            document.getElementById('client-modal-title').innerText = 'Edit Client';
-            openModal('client-modal');
-        };
-
-        window.deleteClient = (id) => {
-            if(dbShipments.some(s => s.clientId === id)) return Swal.fire('Blocked', 'Client has shipments.', 'warning');
-            Swal.fire({ title: 'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then(async (r) => {
-                if(r.isConfirmed) { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'clients', id)); Swal.fire('Deleted!', '', 'success'); }
-            });
-        };
-
-        // ==========================================
-        // SHIPMENTS
-        // ==========================================
+        // ========== Shipments ==========
         const populateClientDropdown = () => { document.getElementById('ship-client').innerHTML = '<option value="">-- Choose Client --</option>' + dbClients.map(c => `<option value="${c.id}">${c.name} ${c.company ? `(${c.company})` : ''}</option>`).join(''); };
         window.openShipmentModal = () => { if(dbClients.length) openModal('shipment-modal'); else Swal.fire('Required', 'Add a client first.', 'info'); };
         const renderShipments = () => {
@@ -1203,6 +1143,7 @@
                 Swal.fire('Success', `Shipment ${jobId} created.`, 'success'); closeModal('shipment-modal');
             } catch(e) { Swal.fire('Error', 'Failed.', 'error'); }
         };
+        document.getElementById('shipment-form').addEventListener('submit', saveShipment);
 
         window.viewShipment = (id) => { currentActiveShipmentId = id; renderShipmentDetails(id); renderShipmentPayments(id); nav('shipment-details'); };
         const renderShipmentDetails = (id) => {
@@ -1229,25 +1170,8 @@
             Swal.fire({icon:'success', title:'Updated', timer:1500}); closeModal('status-modal');
         };
 
-        // ==========================================
-        // PAYMENTS & EMAIL
-        // ==========================================
+        // ========== Payments ==========
         window.openPaymentModal = () => openModal('payment-modal');
-
-        const sendPaymentEmail = (payment, shipment, client) => {
-            if (!client?.email) return;
-            const templateParams = {
-                name: client.name,
-                company: client.company || 'N/A',
-                amount: formatMoney(payment.amount),
-                total_amount: formatMoney(shipment.totalAmount || 0),
-                date: formatDate(payment.date),
-                staff_name: appUser.name,
-                to_email: client.email
-            };
-            emailjs.send('service_4nczyrc', 'template_jr7fa5k', templateParams).catch(e => console.warn('Payment email failed:', e));
-        };
-
         const savePayment = async (e) => {
             e.preventDefault();
             if(!currentUser || !currentActiveShipmentId) return;
@@ -1261,13 +1185,14 @@
             };
             try {
                 const docRef = await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'payments'), payData);
-                if(payData.type === 'Payment') sendPaymentEmail(payData, s, client);
+                if(payData.type === 'Payment') sendPaymentNotificationEmail(payData, s, client);
                 Swal.fire({icon:'success', title:'Saved', timer:1500}); closeModal('payment-modal');
                 if(payData.type === 'Payment') {
                     Swal.fire({ title: 'Generate Receipt?', showCancelButton: true, confirmButtonText: 'Yes' }).then(r => { if(r.isConfirmed) generateReceipt(docRef.id); });
                 }
             } catch(e) { Swal.fire('Error', 'Failed', 'error'); }
         };
+        document.getElementById('payment-form').addEventListener('submit', savePayment);
 
         const renderShipmentPayments = (id) => {
             const payments = dbPayments.filter(p => p.shipmentId === id);
@@ -1295,10 +1220,8 @@
             });
         };
 
-        // ==========================================
-        // PDF GENERATION (FIXED)
-        // ==========================================
-        const executePDF = (elementId, filename) => {
+        // ========== PDF Generation ==========
+        function executePDF(elementId, filename) {
             const template = document.getElementById(elementId);
             const wrapper = document.getElementById('print-templates');
             wrapper.style.display = 'block';
@@ -1307,9 +1230,9 @@
             const opt = { margin:5, filename, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true,logging:false}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
             Swal.fire({ title: 'Generating PDF...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             setTimeout(() => {
-                html2pdf().set(opt).from(template).save().then(() => { wrapper.style.display = 'none'; Swal.close(); }).catch(err => { wrapper.style.display='none'; Swal.fire('Error','PDF failed','error'); console.error(err); });
-            }, 600);
-        };
+                html2pdf().set(opt).from(template).save().then(() => { wrapper.style.display = 'none'; Swal.close(); }).catch(err => { wrapper.style.display='none'; Swal.fire('Error','PDF generation failed','error'); console.error(err); });
+            }, 500);
+        }
 
         window.generateClientAgreement = (clientId) => {
             const c = dbClients.find(x=>x.id===clientId); if(!c) return;
@@ -1322,17 +1245,16 @@
             document.getElementById('agr-gen-by').innerText = appUser.name;
             document.getElementById('agr-footer-gen').innerText = `${appUser.name} (${appUser.role})`;
             document.getElementById('agr-qr-container').innerHTML = '';
-            new QRCode(document.getElementById('agr-qr-container'), { text: `CSL Agreement | Client: ${c.name}`, width:70, height:70 });
+            new QRCode(document.getElementById('agr-qr-container'), { text: `CSL Agreement | ${c.name}`, width:70, height:70 });
             executePDF('pdf-client-agreement', `Client_Agreement_${c.name.replace(/\s+/g,'_')}.pdf`);
         };
 
         window.generateReceipt = (paymentId) => {
             const p = dbPayments.find(x=>x.id===paymentId); if(!p) return;
-            const s = dbShipments.find(x=>x.id===p.shipmentId);
-            const c = s?dbClients.find(x=>x.id===s.clientId):null; if(!s||!c) return;
+            const s = dbShipments.find(x=>x.id===p.shipmentId); const c = s?dbClients.find(x=>x.id===s.clientId):null; if(!s||!c) return;
             document.getElementById('rct-id').innerText = `RCT-${p.createdAt.toString().slice(-6)}`;
             document.getElementById('rct-date').innerText = formatDate(p.date);
-            document.getElementById('rct-client-name').innerText = `${c.name} ${c.company?`(${c.company})`:''}`;
+            document.getElementById('rct-client-name').innerText = `${c.name} ${c.company||''}`;
             document.getElementById('rct-client-address').innerText = c.address||'';
             document.getElementById('rct-job-id').innerText = s.jobId;
             document.getElementById('rct-bl').innerText = s.bl;
@@ -1349,14 +1271,12 @@
 
         window.generateShipmentStatement = () => {
             if(!currentActiveShipmentId) return;
-            const s = dbShipments.find(x=>x.id===currentActiveShipmentId);
-            const c = dbClients.find(x=>x.id===s.clientId); if(!s||!c) return;
+            const s = dbShipments.find(x=>x.id===currentActiveShipmentId); const c = dbClients.find(x=>x.id===s.clientId); if(!s||!c) return;
             document.getElementById('stmt-job-id').innerText = s.jobId;
             document.getElementById('stmt-date').innerText = formatDate(new Date().toISOString());
             document.getElementById('stmt-client-name').innerText = `${c.name} ${c.company||''}`;
             document.getElementById('stmt-client-contact').innerText = `${c.phone} | ${c.email||''}`;
-            document.getElementById('stmt-bl').innerText = s.bl;
-            document.getElementById('stmt-port').innerText = s.port;
+            document.getElementById('stmt-bl').innerText = s.bl; document.getElementById('stmt-port').innerText = s.port;
             document.getElementById('stmt-desc').innerText = s.description;
             const payments = dbPayments.filter(x=>x.shipmentId===s.id).sort((a,b)=>new Date(a.date)-new Date(b.date));
             let charges=0, paid=0;
@@ -1389,6 +1309,13 @@
             new QRCode(document.getElementById('gst-qr-container'), { text: `CSL Global Revenue`, width:80, height:80 });
             executePDF('pdf-global-statement', `Global_Revenue_Statement.pdf`);
         };
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initSystem();
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('pay-date').valueAsDate = new Date();
+        });
 
     </script>
 </body>
